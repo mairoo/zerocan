@@ -40,3 +40,6 @@ web-config:
 | /my/**       | 로그인 사용자 | 개인 정보 관련 (user.id == userId) | 
 | /admin/**    | 관리자     | 시스템 관리 (ROLE_ADMIN)          | 
 | /webhooks/** | 외부 시스템  | 콜백                           | 
+
+# global.response 패키지 추가
+
