@@ -43,6 +43,20 @@ git init
 
 ```yaml
 spring:
+  application:
+    name: api
+  jpa:
+    hibernate:
+      ddl-auto: validate # (spring.jpa.generate-ddl 옵션 미사용)
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        type.descriptor.sql: trace
+        jdbc.batch_size: 50
+        order_inserts: true
+        order_updates: true
+    open-in-view: false # 트랜잭션 경계 설정
   datasource:
     driver-class-name: org.mariadb.jdbc.Driver
     url: jdbc:mariadb://218.145.71.213:3306/database
