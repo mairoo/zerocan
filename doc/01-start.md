@@ -33,5 +33,5 @@ git init
 
 [build.gradle.kts](/build.gradle.kts) 수정
 
+- 서드파티 라이브러리 버전 관리를 위한 상수 선언
 - QueryDSL 지원
-- 서드파티 라이브러리 변경을 위한 상수 선언

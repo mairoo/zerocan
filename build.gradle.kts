@@ -1,8 +1,8 @@
 plugins {
 	kotlin("jvm") version "1.9.25"
-	kotlin("plugin.spring") version "1.9.25" // QueryDSL 지원 추가
-	kotlin("plugin.jpa") version "1.9.25" // QueryDSL 지원 추가
-	kotlin("kapt") version "1.9.25"
+	kotlin("plugin.spring") version "1.9.25" // QueryDSL 지원
+	kotlin("plugin.jpa") version "1.9.25" // QueryDSL 지원
+	kotlin("kapt") version "1.9.25" // QueryDSL 지원
 	id("org.springframework.boot") version "3.5.3"
 	id("io.spring.dependency-management") version "1.1.7"
 }
@@ -41,11 +41,64 @@ object Platform {
 }
 
 dependencies {
-	implementation("org.springframework.boot:spring-boot-starter")
+	// Spring Boot
+	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+	implementation("org.springframework.boot:spring-boot-starter-data-redis")
+	implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
+	implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
+	implementation("org.springframework.boot:spring-boot-starter-security")
+	implementation("org.springframework.boot:spring-boot-starter-validation")
+	implementation("org.springframework.boot:spring-boot-starter-web")
+	implementation("org.springframework.boot:spring-boot-starter-webflux")
+
+	// Kotlin
+	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+	implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
+	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
+
+	// Development
+	developmentOnly("org.springframework.boot:spring-boot-devtools")
+
+	// Database
+	runtimeOnly("com.h2database:h2")
+	runtimeOnly("org.postgresql:postgresql")
+
+	// Annotation Processing
+	annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
+
+	// Testing
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
+	testImplementation("io.projectreactor:reactor-test")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
+	testImplementation("org.springframework.security:spring-security-test")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+	// Logging
+	implementation("io.github.oshai:kotlin-logging-jvm:${Versions.KOTLIN_LOGGING_VERSION}")
+
+	// QueryDSL
+	implementation("com.querydsl:querydsl-jpa:${Versions.QUERYDSL_VERSION}:jakarta")
+	kapt("com.querydsl:querydsl-apt:${Versions.QUERYDSL_VERSION}:jakarta")
+	kapt("jakarta.annotation:jakarta.annotation-api")
+	kapt("jakarta.persistence:jakarta.persistence-api")
+
+	// JWT
+	implementation("io.jsonwebtoken:jjwt-api:${Versions.JJWT_VERSION}")
+	runtimeOnly("io.jsonwebtoken:jjwt-impl:${Versions.JJWT_VERSION}")
+	runtimeOnly("io.jsonwebtoken:jjwt-jackson:${Versions.JJWT_VERSION}")
+
+	// Commons-Codec for TOTP
+	implementation("commons-codec:commons-codec:${Versions.COMMONS_CODEC_VERSION}")
+
+	// grafana
+	implementation("org.springframework.boot:spring-boot-starter-actuator")
+	implementation("io.micrometer:micrometer-registry-prometheus")
+
+	// Netty DNS resolver for Mac
+	Platform.nettyClassifier?.let {
+		runtimeOnly("io.netty:netty-resolver-dns-native-macos:${Versions.NETTY_VERSION}:${it}")
+	}
 }
 
 kotlin {
@@ -54,6 +107,23 @@ kotlin {
 	}
 }
 
+allOpen {
+	// QueryDSL 지원
+	annotation("jakarta.persistence.Entity")
+	annotation("jakarta.persistence.MappedSuperclass")
+	annotation("jakarta.persistence.Embeddable")
+}
+
 tasks.withType<Test> {
 	useJUnitPlatform()
+}
+
+tasks.bootJar {
+	// 버전 태그 없이 jar 파일 빌드, 배포 시 용이
+	archiveFileName.set("${rootProject.name}.jar")
+}
+
+tasks.jar {
+	// plain JAR 생성 비활성화
+	enabled = false
 }
