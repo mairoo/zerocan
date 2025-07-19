@@ -84,4 +84,16 @@ class SecurityConfig(
 - Keycloak OAuth2 설정
 - 엔드포인트별 권한 설정
 - 커스텀 필터 추가
-- 인증/인가 예외 처리
+
+## 인증/인가 예외 처리 주입
+
+- [ApiAccessDeniedHandler](/src/main/kotlin/kr/pincoin/api/global/security/handler/ApiAccessDeniedHandler.kt)
+- [ApiAuthenticationEntryPoint](/src/main/kotlin/kr/pincoin/api/global/security/handler/ApiAuthenticationEntryPoint.kt)
+
+```
+    .exceptionHandling { exceptions ->
+        exceptions
+            .authenticationEntryPoint(authenticationEntryPoint)
+            .accessDeniedHandler(accessDeniedHandler)
+    }
+```

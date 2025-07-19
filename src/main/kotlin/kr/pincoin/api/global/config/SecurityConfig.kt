@@ -1,6 +1,8 @@
 package kr.pincoin.api.global.config
 
 import kr.pincoin.api.global.properties.CorsProperties
+import kr.pincoin.api.global.security.handler.ApiAccessDeniedHandler
+import kr.pincoin.api.global.security.handler.ApiAuthenticationEntryPoint
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
@@ -16,6 +18,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 @EnableWebSecurity
 @EnableMethodSecurity
 class SecurityConfig(
+    private val authenticationEntryPoint: ApiAuthenticationEntryPoint,
+    private val accessDeniedHandler: ApiAccessDeniedHandler,
     private val corsProperties: CorsProperties,
 ) {
     @Bean
@@ -53,6 +57,11 @@ class SecurityConfig(
             .sessionManagement { session ->
                 // JWT 사용을 위한 세션리스 정책 설정
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            }
+            .exceptionHandling { exceptions ->
+                exceptions
+                    .authenticationEntryPoint(authenticationEntryPoint)
+                    .accessDeniedHandler(accessDeniedHandler)
             }
             .build()
 
