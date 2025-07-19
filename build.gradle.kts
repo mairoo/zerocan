@@ -61,8 +61,7 @@ dependencies {
 	developmentOnly("org.springframework.boot:spring-boot-devtools")
 
 	// Database
-	runtimeOnly("com.h2database:h2")
-	runtimeOnly("org.postgresql:postgresql")
+	runtimeOnly("org.mariadb.jdbc:mariadb-java-client")
 
 	// Annotation Processing
 	annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")

@@ -29,9 +29,25 @@ git init
 
 원격 저장소 생성 후 연결
 
-# 빌드 설정
+# 빌드 및 실행 설정
 
-[build.gradle.kts](/build.gradle.kts) 수정
+## [build.gradle.kts](/build.gradle.kts) 수정
 
 - 서드파티 라이브러리 버전 관리를 위한 상수 선언
 - QueryDSL 지원
+
+## [application-local.yml](/src/main/resources/application-local.yml) 파일 추가
+
+- 실행 프로파일 변경: local
+- `spring.datasource` 알맞게 변경
+
+```yaml
+spring:
+  datasource:
+    driver-class-name: org.mariadb.jdbc.Driver
+    url: jdbc:mariadb://218.145.71.213:3306/database
+    username: username
+    password: password
+    hikari:
+      connectionInitSql: "SET NAMES utf8mb4"
+```
