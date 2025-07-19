@@ -184,6 +184,7 @@ keycloak:
   server-url: http://keycloak:8080
 ```
 
-## `KeycloakProperties` 추가
+## 주요 파일 추가
 
 - [KeycloakProperties](/src/main/kotlin/kr/pincoin/api/global/properties/KeycloakProperties.kt)
+- [KeycloakWebClientConfig](/src/main/kotlin/kr/pincoin/api/global/config/KeycloakWebClientConfig.kt)
