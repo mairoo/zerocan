@@ -1,4 +1,4 @@
-package kr.pincoin.api.infra.user.repository.projection
+package kr.pincoin.api.infra.user.repository.criteria
 
 data class UserSearchCriteria(
     val userId: Long? = null,

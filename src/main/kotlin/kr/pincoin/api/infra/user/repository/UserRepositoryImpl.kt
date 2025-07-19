@@ -4,7 +4,7 @@ import kr.pincoin.api.domain.user.model.User
 import kr.pincoin.api.domain.user.repository.UserRepository
 import kr.pincoin.api.infra.user.mapper.toEntity
 import kr.pincoin.api.infra.user.mapper.toModel
-import kr.pincoin.api.infra.user.repository.projection.UserSearchCriteria
+import kr.pincoin.api.infra.user.repository.criteria.UserSearchCriteria
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Repository

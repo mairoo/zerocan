@@ -5,7 +5,7 @@ import com.querydsl.jpa.impl.JPAQuery
 import com.querydsl.jpa.impl.JPAQueryFactory
 import kr.pincoin.api.infra.user.entity.QUserEntity
 import kr.pincoin.api.infra.user.entity.UserEntity
-import kr.pincoin.api.infra.user.repository.projection.UserSearchCriteria
+import kr.pincoin.api.infra.user.repository.criteria.UserSearchCriteria
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.support.PageableExecutionUtils
