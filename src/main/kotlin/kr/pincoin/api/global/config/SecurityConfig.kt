@@ -24,7 +24,7 @@ class SecurityConfig(
 ) {
     @Bean
     fun filterChain(http: HttpSecurity): SecurityFilterChain {
-        // 순서 중요: 기본 설정 → OAuth2 설정 (조건부) → 권한 설정 → 필터 → 예외 처리 → 빌드
+        // 순서 중요: 1. 기본 설정 → 2. OAuth2 설정 (조건부) → 3. 권한 설정 → 4. 필터 → 5. 예외 처리 → 빌드
 
         // 1. 기본 설정
         val httpSecurity = http
@@ -58,6 +58,24 @@ class SecurityConfig(
                 // JWT 사용을 위한 세션리스 정책 설정
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             }
+            // 3. 엔드포인트별 권한 설정
+            .authorizeHttpRequests { auth ->
+                auth
+                    .requestMatchers(
+                        "/actuator/health",
+                        "/actuator/prometheus",
+                        "/actuator/info"
+                    ).permitAll()
+                    .requestMatchers("/actuator/**").denyAll()
+                    .requestMatchers(
+                        "/auth/**",
+                        "/oauth2/**",
+                        "/open/**",
+                        "/webhooks/**",
+                    ).permitAll()
+                    .anyRequest().authenticated()
+            }
+            // 5. 인증/인가 예외 처리
             .exceptionHandling { exceptions ->
                 exceptions
                     .authenticationEntryPoint(authenticationEntryPoint)

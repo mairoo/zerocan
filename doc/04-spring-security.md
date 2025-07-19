@@ -2,7 +2,9 @@
 
 ## 최소 설정
 
-[SecurityConfig](/src/main/kotlin/kr/pincoin/api/global/config/SecurityConfig.kt)
+- [SecurityConfig](/src/main/kotlin/kr/pincoin/api/global/config/SecurityConfig.kt)
+- [ApiAccessDeniedHandler](/src/main/kotlin/kr/pincoin/api/global/security/handler/ApiAccessDeniedHandler.kt)
+- [ApiAuthenticationEntryPoint](/src/main/kotlin/kr/pincoin/api/global/security/handler/ApiAuthenticationEntryPoint.kt)
 
 ```kotlin
 @Configuration
@@ -13,7 +15,7 @@ class SecurityConfig(
 ) {
     @Bean
     fun filterChain(http: HttpSecurity): SecurityFilterChain {
-        // 순서 중요: 기본 설정 → OAuth2 설정 (조건부) → 권한 설정 → 필터 → 예외 처리 → 빌드
+        // 순서 중요: 1. 기본 설정 → 2. OAuth2 설정 (조건부) → 3. 권한 설정 → 4. 필터 → 5. 예외 처리 → 빌드
 
         // 1. 기본 설정
         val httpSecurity = http
@@ -47,11 +49,33 @@ class SecurityConfig(
                 // JWT 사용을 위한 세션리스 정책 설정
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             }
+            // 3. 엔드포인트별 권한 설정
+            .authorizeHttpRequests { auth ->
+                auth
+                    .requestMatchers(
+                        "/actuator/health",
+                        "/actuator/prometheus",
+                        "/actuator/info"
+                    ).permitAll()
+                    .requestMatchers("/actuator/**").denyAll()
+                    .requestMatchers(
+                        "/auth/**",
+                        "/oauth2/**",
+                        "/open/**",
+                        "/webhooks/**",
+                    ).permitAll()
+                    .anyRequest().authenticated()
+            }
+            // 5. 인증/인가 예외 처리
+            .exceptionHandling { exceptions ->
+                exceptions
+                    .authenticationEntryPoint(authenticationEntryPoint)
+                    .accessDeniedHandler(accessDeniedHandler)
+            }
             .build()
 
         return httpSecurity
     }
-
 
     @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {
@@ -79,21 +103,6 @@ class SecurityConfig(
 }
 ```
 
-누락 사항
+## Keycloak OAuth2 설정
 
-- Keycloak OAuth2 설정
-- 엔드포인트별 권한 설정
-- 커스텀 필터 추가
-
-## 인증/인가 예외 처리 주입
-
-- [ApiAccessDeniedHandler](/src/main/kotlin/kr/pincoin/api/global/security/handler/ApiAccessDeniedHandler.kt)
-- [ApiAuthenticationEntryPoint](/src/main/kotlin/kr/pincoin/api/global/security/handler/ApiAuthenticationEntryPoint.kt)
-
-```
-    .exceptionHandling { exceptions ->
-        exceptions
-            .authenticationEntryPoint(authenticationEntryPoint)
-            .accessDeniedHandler(accessDeniedHandler)
-    }
-```
+## 커스텀 필터 추가
