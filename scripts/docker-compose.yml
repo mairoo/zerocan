@@ -1,0 +1,117 @@
+services:
+  redis:
+    container_name: ${PREFIX}-redis
+    image: redis:alpine
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    networks:
+      - app-network
+    environment:
+      - TZ=Asia/Seoul
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "10"
+
+  keycloak-postgres:
+    container_name: ${PREFIX}-keycloak-postgres
+    image: postgres:15-alpine
+    restart: unless-stopped
+    volumes:
+      - keycloak-postgres-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    environment:
+      - TZ=Asia/Seoul
+      - POSTGRES_DB=keycloak
+      - POSTGRES_USER=keycloak
+      - POSTGRES_PASSWORD=${KEYCLOAK_DB_PASSWORD:-keycloak123}
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "10"
+
+  keycloak:
+    container_name: ${PREFIX}-keycloak
+    image: quay.io/keycloak/keycloak:23.0.3
+    restart: unless-stopped
+    ports:
+      - "8082:8080"
+    depends_on:
+      - keycloak-postgres
+    networks:
+      - app-network
+    environment:
+      - TZ=Asia/Seoul
+      - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN:-admin}
+      - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD:-admin123}
+      - KC_DB=postgres
+      - KC_DB_URL=jdbc:postgresql://keycloak-postgres:5432/keycloak
+      - KC_DB_USERNAME=keycloak
+      - KC_DB_PASSWORD=${KEYCLOAK_DB_PASSWORD:-keycloak123}
+      # - KC_HOSTNAME=keycloak
+      # - KC_HOSTNAME_PORT=8080
+      - KC_HOSTNAME_STRICT=false
+      - KC_HOSTNAME_STRICT_HTTPS=false
+      - KC_HTTP_ENABLED=true
+      - KC_HEALTH_ENABLED=true
+      - KC_METRICS_ENABLED=true
+    command: start
+    volumes:
+      - keycloak-data:/opt/keycloak/data
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "10"
+
+  backend:
+    container_name: ${PREFIX}-backend
+    image: ${PREFIX}-backend:local
+    build:
+      context: ./repo
+      dockerfile: Dockerfile.local
+    working_dir: /app
+    volumes:
+      - ./repo:/app:cached  # 소스코드를 볼륨 마운트
+      - gradle-cache:/root/.gradle
+    ports:
+      - "8080:8080"
+    depends_on:
+      - redis
+      - keycloak
+    networks:
+      - app-network
+    environment:
+      - TZ=Asia/Seoul
+      - SPRING_PROFILES_ACTIVE=local
+      - KEYCLOAK_AUTH_SERVER_URL=http://localhost:8082
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+networks:
+  app-network:
+    name: ${PREFIX}-network
+    driver: bridge
+
+volumes:
+  redis-data:
+    name: ${PREFIX}-redis-data
+  gradle-cache:
+    name: ${PREFIX}-gradle-cache
+  keycloak-postgres-data:
+    name: ${PREFIX}-keycloak-postgres-data
+  keycloak-data:
+    name: ${PREFIX}-keycloak-data
