@@ -15,6 +15,21 @@
 5. [QueryDslConfig](/src/main/kotlin/kr/pincoin/api/global/config/QueryDslConfig.kt)
 6. [SchedulerConfig](/src/main/kotlin/kr/pincoin/api/global/config/SchedulerConfig.kt)
 
+# 주요 속성
+
+- [application-local.yml](/src/main/resources/application-local.yml) 파일에 추가
+
+```yaml
+web-config:
+  cors:
+    allowed-origins: http://localhost:3000,http://localhost:8080
+    allowed-methods: GET,POST,PUT,PATCH,DELETE,OPTIONS
+    allowed-headers: '*'
+    max-age: 3600
+```
+
+[CorsProperties](/src/main/kotlin/kr/pincoin/api/global/properties/CorsProperties.kt)
+
 # 엔드포인트와 역할 체계
 
 | 엔드포인트        | 회원 유무   | 공개 유무                        |

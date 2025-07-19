@@ -1,0 +1,8 @@
+FROM eclipse-temurin:21-jdk-alpine
+WORKDIR /app
+RUN apk add --no-cache curl
+VOLUME ["/app"]
+# 환경변수 설정
+# TZ=Asia/Seoul
+# SPRING_PROFILES_ACTIVE=local
+CMD ["./gradlew", "bootRun", "--no-daemon"]

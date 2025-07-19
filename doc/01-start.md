@@ -64,11 +64,4 @@ spring:
     password: password
     hikari:
       connectionInitSql: "SET NAMES utf8mb4"
-
-web-config:
-  cors:
-    allowed-origins: http://localhost:3000,http://localhost:8080
-    allowed-methods: GET,POST,PUT,PATCH,DELETE,OPTIONS
-    allowed-headers: '*'
-    max-age: 3600
 ```
