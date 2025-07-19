@@ -26,6 +26,17 @@ class UserRoleQueryRepositoryImpl(
             .orderBy(userRole.id.desc())
             .fetch()
 
+    override fun findUserRoles(
+        userIds: List<Long>,
+    ): List<UserRoleEntity> =
+        queryFactory
+            .selectFrom(userRole)
+            .where(
+                userRole.userId.`in`(userIds),
+                eqIsRemoved(false),
+            )
+            .fetch()
+
     override fun findUserRole(
         criteria: UserRoleSearchCriteria,
     ): UserRoleEntity? =

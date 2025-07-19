@@ -27,6 +27,11 @@ class UserRoleRepositoryImpl(
     ): List<UserRole> =
         queryRepository.findUserRoles(userId).toModelList()
 
+    override fun findUserRoles(
+        userIds: List<Long>,
+    ): List<UserRole> =
+        queryRepository.findUserRoles(userIds).toModelList()
+
     override fun findUserRole(
         criteria: UserRoleSearchCriteria,
     ): UserRole? =

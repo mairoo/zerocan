@@ -8,6 +8,10 @@ interface UserRoleQueryRepository {
         userId: Long,
     ): List<UserRoleEntity>
 
+    fun findUserRoles(
+        userIds: List<Long>,
+    ): List<UserRoleEntity>
+
     fun findUserRole(
         criteria: UserRoleSearchCriteria,
     ): UserRoleEntity?

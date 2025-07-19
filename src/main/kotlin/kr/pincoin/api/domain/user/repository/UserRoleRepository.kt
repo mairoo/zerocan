@@ -12,6 +12,10 @@ interface UserRoleRepository {
         userId: Long,
     ): List<UserRole>
 
+    fun findUserRoles(
+        userIds: List<Long>,
+    ): List<UserRole>
+
     fun findUserRole(
         criteria: UserRoleSearchCriteria,
     ): UserRole?
