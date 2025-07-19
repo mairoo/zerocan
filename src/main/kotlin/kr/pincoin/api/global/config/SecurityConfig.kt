@@ -1,10 +1,17 @@
-# 주요 파일
+package kr.pincoin.api.global.config
 
-## 최소 설정
+import kr.pincoin.api.global.properties.CorsProperties
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
+import org.springframework.security.config.annotation.web.builders.HttpSecurity
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
+import org.springframework.security.config.http.SessionCreationPolicy
+import org.springframework.security.web.SecurityFilterChain
+import org.springframework.web.cors.CorsConfiguration
+import org.springframework.web.cors.CorsConfigurationSource
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 
-[SecurityConfig](/src/main/kotlin/kr/pincoin/api/global/config/SecurityConfig.kt)
-
-```kotlin
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -77,11 +84,3 @@ class SecurityConfig(
         }
     }
 }
-```
-
-누락 사항
-
-- Keycloak OAuth2 설정
-- 엔드포인트별 권한 설정
-- 커스텀 필터 추가
-- 인증/인가 예외 처리
