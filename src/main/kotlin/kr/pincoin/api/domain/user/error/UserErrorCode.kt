@@ -55,4 +55,20 @@ enum class UserErrorCode(
         HttpStatus.INTERNAL_SERVER_ERROR,
         "Keycloak 관리자 토큰 획득 실패했습니다",
     ),
+    INVALID_REFRESH_TOKEN(
+        HttpStatus.BAD_REQUEST,
+        "리프레시 토큰이 올바르지 않습니다",
+    ),
+    TOKEN_REFRESH_TIMEOUT(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "리프레시 토큰 타임아웃 발생했습니다",
+    ),
+    TOKEN_REFRESH_FAILED(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "리프레시 실패했습니다",
+    ),
+    LOGOUT_ALL_FAILED(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "전체 로그아웃 실패했습니다",
+    ),
 }

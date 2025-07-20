@@ -14,10 +14,7 @@ import kr.pincoin.api.global.utils.DomainUtils
 import org.springframework.http.HttpHeaders
 import org.springframework.http.ResponseCookie
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/auth")
@@ -40,9 +37,35 @@ class AuthController(
             .body(ApiResponse.of(tokenPair.accessToken))
     }
 
-    // refresh
+    /**
+     * 리프레시 토큰을 사용하여 새로운 액세스 토큰과 리프레시 토큰을 발급
+     */
+    @PostMapping("/refresh")
+    fun refresh(
+        @CookieValue(name = CookieKey.REFRESH_TOKEN_NAME) refreshToken: String,
+        servletRequest: HttpServletRequest,
+    ): ResponseEntity<ApiResponse<AccessTokenResponse>> {
+        val tokenPair = authService.refreshToken(refreshToken, servletRequest)
 
-    // sign-out
+        return ResponseEntity.ok()
+            .headers(createRefreshTokenCookie(tokenPair.refreshToken, servletRequest))
+            .body(ApiResponse.of(tokenPair.accessToken))
+    }
+
+    /**
+     * 사용자 로그아웃을 처리하고 리프레시 토큰을 무효화
+     */
+    @PostMapping("/sign-out")
+    fun signOut(
+        @CookieValue(name = CookieKey.REFRESH_TOKEN_NAME, required = false) refreshToken: String?,
+        servletRequest: HttpServletRequest,
+    ): ResponseEntity<ApiResponse<Unit>> {
+        refreshToken?.let { authService.logout(it) }
+
+        return ResponseEntity.ok()
+            .headers(createRefreshTokenCookie(null, servletRequest)) // 쿠키 삭제 효과
+            .body(ApiResponse.of(Unit))
+    }
 
     /**
      * 회원 가입을 합니다.
