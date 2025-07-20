@@ -1,4 +1,4 @@
-package kr.pincoin.api.global.properties
+package kr.pincoin.api.external.auth.keycloak.properties
 
 import org.springframework.boot.context.properties.ConfigurationProperties
 
@@ -16,7 +16,6 @@ data class KeycloakProperties(
 
     val serverUrl: String = "http://keycloak:8080"
 ) {
-
     data class UserMigration(
         val autoCreate: Boolean = false,
     )

@@ -1,8 +1,8 @@
-package kr.pincoin.api.global.config
+package kr.pincoin.api.external.auth.keycloak.config
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.netty.channel.ChannelOption
-import kr.pincoin.api.global.properties.KeycloakProperties
+import kr.pincoin.api.external.auth.keycloak.properties.KeycloakProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpHeaders
