@@ -19,9 +19,17 @@ enum class UserErrorCode(
         HttpStatus.BAD_REQUEST,
         "아이디 또는 이메일이 이미 존재합니다",
     ),
-    PASSWORD_MISMATCH(
+    INVALID_CREDENTIALS(
         HttpStatus.BAD_REQUEST,
-        "비밀번호 불일치"
+        "이메일 또는 비밀번호 불일치"
+    ),
+    LOGIN_TIMEOUT(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "로그인 타임아웃",
+    ),
+    LOGIN_FAILED(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "로그인 실패",
     ),
     SYSTEM_ERROR(
         HttpStatus.INTERNAL_SERVER_ERROR,

@@ -2,7 +2,9 @@ package kr.pincoin.api.app.auth.controller
 
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
+import kr.pincoin.api.app.auth.request.SignInRequest
 import kr.pincoin.api.app.auth.request.SignUpRequest
+import kr.pincoin.api.app.auth.response.AccessTokenResponse
 import kr.pincoin.api.app.auth.service.AuthService
 import kr.pincoin.api.app.user.common.response.UserResponse
 import kr.pincoin.api.global.constant.CookieKey
@@ -23,7 +25,20 @@ class AuthController(
     private val jwtProperties: JwtProperties,
     private val authService: AuthService,
 ) {
-    // sign-in
+    /**
+     * 사용자 로그인을 처리하고 액세스 토큰과 리프레시 토큰을 발급
+     */
+    @PostMapping("/sign-in")
+    fun signIn(
+        @Valid @RequestBody request: SignInRequest,
+        servletRequest: HttpServletRequest,
+    ): ResponseEntity<ApiResponse<AccessTokenResponse>> {
+        val tokenPair = authService.login(request, servletRequest)
+
+        return ResponseEntity.ok()
+            .headers(createRefreshTokenCookie(tokenPair.refreshToken, servletRequest))
+            .body(ApiResponse.of(tokenPair.accessToken))
+    }
 
     // refresh
 

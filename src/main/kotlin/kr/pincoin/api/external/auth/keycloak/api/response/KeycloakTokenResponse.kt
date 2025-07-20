@@ -15,18 +15,21 @@ data class KeycloakTokenResponse(
     val refreshExpiresIn: Long,
 
     @JsonProperty("refresh_token")
-    val refreshToken: String? = null,
+    val refreshToken: String? = null, // Admin 토큰에는 없을 수 있음
 
     @JsonProperty("token_type")
     val tokenType: String,
 
+    @JsonProperty("id_token")
+    val idToken: String? = null,
+
     @JsonProperty("not_before_policy")
-    @JsonAlias("not-before-policy")  // 하이픈 버전도 처리
+    @JsonAlias("not-before-policy")
     val notBeforePolicy: Long? = null,
 
     @JsonProperty("session_state")
     val sessionState: String? = null,
 
     @JsonProperty("scope")
-    val scope: String? = null
+    val scope: String? = null,
 ) : KeycloakResponse

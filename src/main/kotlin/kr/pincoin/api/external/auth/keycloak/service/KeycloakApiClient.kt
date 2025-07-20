@@ -207,11 +207,15 @@ class KeycloakApiClient(
             try {
                 objectMapper.readValue(response, KeycloakTokenResponse::class.java)
             } catch (e: Exception) {
-                val errorCode = KeycloakApiErrorCode.JSON_PARSING_ERROR
-                KeycloakErrorResponse(
-                    error = errorCode.code,
-                    errorDescription = "응답 파싱 오류: ${e.message}"
-                )
+                try {
+                    objectMapper.readValue(response, KeycloakErrorResponse::class.java)
+                } catch (_: Exception) {
+                    val errorCode = KeycloakApiErrorCode.JSON_PARSING_ERROR
+                    KeycloakErrorResponse(
+                        error = errorCode.code,
+                        errorDescription = "JSON 파싱 실패: ${e.message}"
+                    )
+                }
             }
         } catch (e: WebClientResponseException) {
             handleHttpError(e)
