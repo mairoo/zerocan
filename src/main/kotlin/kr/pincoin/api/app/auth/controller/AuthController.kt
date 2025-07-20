@@ -1,10 +1,16 @@
 package kr.pincoin.api.app.auth.controller
 
+import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import kr.pincoin.api.app.auth.request.SignUpRequest
 import kr.pincoin.api.app.auth.service.AuthService
 import kr.pincoin.api.app.user.common.response.UserResponse
+import kr.pincoin.api.global.constant.CookieKey
+import kr.pincoin.api.global.properties.JwtProperties
 import kr.pincoin.api.global.response.success.ApiResponse
+import kr.pincoin.api.global.utils.DomainUtils
+import org.springframework.http.HttpHeaders
+import org.springframework.http.ResponseCookie
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -14,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/auth")
 class AuthController(
+    private val jwtProperties: JwtProperties,
     private val authService: AuthService,
 ) {
     // sign-in
@@ -22,7 +29,6 @@ class AuthController(
 
     // sign-out
 
-    // sign-up
     /**
      * 회원 가입을 합니다.
      */
@@ -34,4 +40,28 @@ class AuthController(
             .let { UserResponse.from(it) }
             .let { ApiResponse.of(it) }
             .let { ResponseEntity.ok(it) }
+
+    /**
+     * 리프레시 토큰을 포함하는 HTTP 쿠키 생성
+     */
+    private fun createRefreshTokenCookie(
+        refreshToken: String?,
+        request: HttpServletRequest,
+    ): HttpHeaders =
+        HttpHeaders().apply {
+            val cookieValue = refreshToken?.takeIf { it.isNotEmpty() }
+            val requestDomain = DomainUtils.getRequestDomain(request)
+            val cookieDomain = jwtProperties.findCookieDomain(requestDomain)
+
+            val cookie = ResponseCookie.from(CookieKey.REFRESH_TOKEN_NAME, cookieValue ?: "")
+                .httpOnly(true)
+                .secure(!requestDomain.contains("localhost"))
+                .path(CookieKey.PATH)
+                .maxAge(cookieValue?.let { jwtProperties.refreshTokenExpiresIn } ?: 0)
+                .sameSite(CookieKey.SAME_SITE)
+                .domain(cookieDomain)
+                .build()
+
+            add(HttpHeaders.SET_COOKIE, cookie.toString())
+        }
 }
