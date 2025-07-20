@@ -21,6 +21,9 @@ class UserEntity private constructor(
     @Embedded
     val removalFields: RemovalFields = RemovalFields(),
 
+    @Column(name = "keycloak_id")
+    val keycloakId: String,
+
     @Column(name = "is_active")
     val isActive: Boolean,
 
@@ -51,6 +54,7 @@ class UserEntity private constructor(
         fun of(
             id: Long? = null,
             isRemoved: Boolean = false,
+            keycloakId: String,
             isActive: Boolean = true,
             name: String,
             email: String,
@@ -59,6 +63,7 @@ class UserEntity private constructor(
             removalFields = RemovalFields().apply {
                 this.isRemoved = isRemoved
             },
+            keycloakId = keycloakId,
             isActive = isActive,
             name = name,
             email = email,

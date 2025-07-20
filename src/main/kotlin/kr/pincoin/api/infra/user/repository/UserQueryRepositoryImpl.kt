@@ -61,6 +61,15 @@ class UserQueryRepositoryImpl(
             .where(user.email.eq(email))
             .fetchFirst() != null
 
+    override fun existsByKeycloakId(
+        keycloakId: String,
+    ): Boolean =
+        queryFactory
+            .selectOne()
+            .from(user)
+            .where(user.keycloakId.eq(keycloakId))
+            .fetchFirst() != null
+
     private fun <T> executePageQuery(
         criteria: UserSearchCriteria,
         pageable: Pageable,
@@ -97,6 +106,7 @@ class UserQueryRepositoryImpl(
         criteria: UserSearchCriteria
     ): Array<BooleanExpression?> = arrayOf(
         eqUserId(criteria.userId),
+        eqKeycloakId(criteria.keycloakId),
         eqIsActive(criteria.isActive),
         containsName(criteria.name),
         eqEmail(criteria.email),
@@ -111,6 +121,11 @@ class UserQueryRepositoryImpl(
         userId: Long?,
     ): BooleanExpression? =
         userId?.let { user.id.eq(it) }
+
+    private fun eqKeycloakId(
+        keycloakId: String?,
+    ): BooleanExpression? =
+        keycloakId?.let { user.keycloakId.eq(it) }
 
     private fun eqIsActive(
         isActive: Boolean?,

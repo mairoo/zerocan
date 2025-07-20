@@ -118,4 +118,9 @@ class UserRepositoryImpl(
         email: String,
     ): Boolean =
         queryRepository.existsByEmail(email)
+
+    override fun existsByKeycloakId(
+        keycloakId: String,
+    ): Boolean =
+        queryRepository.existsByKeycloakId(keycloakId)
 }

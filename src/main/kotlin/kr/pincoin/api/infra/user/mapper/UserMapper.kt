@@ -18,6 +18,7 @@ fun UserEntity?.toModel(
             created = entity.dateTimeFields.createdAt,
             modified = entity.dateTimeFields.modifiedAt,
             isRemoved = entity.removalFields.isRemoved,
+            keycloakId = entity.keycloakId,
             isActive = entity.isActive,
             name = entity.name,
             email = entity.email,
@@ -37,6 +38,7 @@ fun User?.toEntity(): UserEntity? =
         UserEntity.of(
             id = model.id,
             isRemoved = model.isRemoved,
+            keycloakId = model.keycloakId,
             isActive = model.isActive,
             name = model.name,
             email = model.email,

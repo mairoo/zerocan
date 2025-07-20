@@ -13,6 +13,7 @@ class User private constructor(
     val isRemoved: Boolean,
 
     // 3. 도메인 로직 불변 필드
+    val keycloakId: String,
 
     // 4. 도메인 로직 가변 필드
     val isActive: Boolean,
@@ -73,6 +74,7 @@ class User private constructor(
 
     private fun copy(
         isRemoved: Boolean = this.isRemoved,
+        keycloakId: String = this.keycloakId,
         isActive: Boolean = this.isActive,
         name: String = this.name,
         email: String = this.email,
@@ -82,6 +84,7 @@ class User private constructor(
         created = this.created,
         modified = this.modified,
         isRemoved = isRemoved,
+        keycloakId = keycloakId,
         isActive = isActive,
         name = name,
         email = email,
@@ -94,6 +97,7 @@ class User private constructor(
             created: LocalDateTime? = null,
             modified: LocalDateTime? = null,
             isRemoved: Boolean? = null,
+            keycloakId: String,
             isActive: Boolean = true,
             name: String,
             email: String,
@@ -106,6 +110,7 @@ class User private constructor(
                 created = created,
                 modified = modified,
                 isRemoved = isRemoved ?: false,
+                keycloakId = keycloakId,
                 isActive = isActive,
                 name = name,
                 email = email,

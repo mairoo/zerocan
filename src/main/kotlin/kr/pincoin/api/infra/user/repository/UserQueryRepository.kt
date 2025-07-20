@@ -23,4 +23,8 @@ interface UserQueryRepository {
     fun existsByEmail(
         email: String,
     ): Boolean
+
+    fun existsByKeycloakId(
+        keycloakId: String,
+    ): Boolean
 }

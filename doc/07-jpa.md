@@ -14,4 +14,10 @@
   구현체
 - [UserJdbcRepository](/src/main/kotlin/kr/pincoin/api/infra/user/repository/UserJdbcRepository.kt): JDBC 템플릿 배치작업 구현체
 
+# User - Role 특징
+
+- User는 여러 Role을 가질 수 있다.
+- Role 이름 자체는 enum 문자열이다.
+- UserRepositoryImpl 내부에 Role을 같이 저장하는 게 숨겨져 있다.
+
 # 상속 구조
