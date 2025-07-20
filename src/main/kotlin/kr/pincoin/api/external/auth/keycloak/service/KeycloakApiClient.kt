@@ -1,6 +1,7 @@
 package kr.pincoin.api.external.auth.keycloak.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import kotlinx.coroutines.reactor.awaitSingle
 import kr.pincoin.api.external.auth.keycloak.api.request.*
 import kr.pincoin.api.external.auth.keycloak.api.response.*
 import kr.pincoin.api.external.auth.keycloak.error.KeycloakApiErrorCode
@@ -23,18 +24,42 @@ class KeycloakApiClient(
 ) {
     /**
      * Admin API - 사용자 생성
-     * JSON 기반 POST 요청, Bearer 토큰 인증이 필요하므로 executeAdminApiCall 사용
+     * Location 헤더에서 생성된 사용자 ID를 추출하여 반환
      */
     suspend fun createUser(
         adminToken: String,
         request: KeycloakCreateUserRequest,
-    ): KeycloakResponse = executeAdminApiCall(
-        uri = "/admin/realms/${keycloakProperties.realm}/users",
-        method = "POST",
-        adminToken = adminToken,
-        request = request,
-        responseType = KeycloakCreateUserResponse::class.java
-    )
+    ): KeycloakResponse {
+        return try {
+            val response = keycloakWebClient
+                .post()
+                .uri("/admin/realms/${keycloakProperties.realm}/users")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer $adminToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(request)
+                .retrieve()
+                .toBodilessEntity()
+                .awaitSingle()
+
+            // Location 헤더에서 사용자 ID 추출
+            val locationHeader = response.headers.getFirst(HttpHeaders.LOCATION)
+            val userId = extractUserIdFromLocation(locationHeader)
+
+            if (userId != null) {
+                KeycloakCreateUserResponse(userId = userId)
+            } else {
+                val errorCode = KeycloakApiErrorCode.JSON_PARSING_ERROR
+                KeycloakErrorResponse(
+                    error = errorCode.code,
+                    errorDescription = "Location 헤더에서 사용자 ID를 추출할 수 없습니다."
+                )
+            }
+        } catch (e: WebClientResponseException) {
+            handleHttpError(e)
+        } catch (e: Exception) {
+            handleGenericError(e)
+        }
+    }
 
     /**
      * Admin API - 사용자 정보 조회
@@ -128,6 +153,19 @@ class KeycloakApiClient(
      */
     suspend fun getUserInfo(accessToken: String): KeycloakResponse =
         executeUserInfoApiCall("/realms/${keycloakProperties.realm}/protocol/openid-connect/userinfo", accessToken)
+
+    /**
+     * Location 헤더에서 사용자 ID 추출
+     * 예: "http://keycloak:8080/admin/realms/my-realm/users/550e8400-e29b-41d4-a716-446655440000"
+     * -> "550e8400-e29b-41d4-a716-446655440000"
+     */
+    private fun extractUserIdFromLocation(locationHeader: String?): String? {
+        return locationHeader?.let { location ->
+            // URL에서 마지막 path segment가 사용자 ID
+            location.substringAfterLast("/")
+                .takeIf { it.isNotBlank() && it.matches(UUID_REGEX) }
+        }
+    }
 
     /**
      * 토큰 발급/갱신 API 호출
@@ -256,17 +294,6 @@ class KeycloakApiClient(
                         .awaitBody<String>()
                 }
 
-                "POST" -> {
-                    keycloakWebClient
-                        .post()
-                        .uri(uri)
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer $adminToken")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .bodyValue(request ?: "")
-                        .retrieve()
-                        .awaitBody<String>()
-                }
-
                 "PUT" -> {
                     keycloakWebClient
                         .put()
@@ -360,6 +387,12 @@ class KeycloakApiClient(
         return KeycloakErrorResponse(
             error = errorCode.code,
             errorDescription = "${errorCode.message}: ${e.message ?: "알 수 없는 오류"}"
+        )
+    }
+
+    companion object {
+        private val UUID_REGEX = Regex(
+            "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
         )
     }
 }
