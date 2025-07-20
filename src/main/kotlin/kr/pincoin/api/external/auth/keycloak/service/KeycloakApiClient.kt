@@ -62,6 +62,22 @@ class KeycloakApiClient(
     }
 
     /**
+     * Admin API - 사용자 삭제
+     * HTTP Method: DELETE
+     * Authorization: Bearer 토큰 (Admin 권한)
+     * 응답: 204 No Content (성공시 빈 응답)
+     */
+    suspend fun deleteUser(
+        adminToken: String,
+        userId: String
+    ): KeycloakResponse = executeAdminApiCall(
+        uri = "/admin/realms/${keycloakProperties.realm}/users/$userId",
+        method = "DELETE",
+        adminToken = adminToken,
+        responseType = KeycloakDeleteUserResponse::class.java
+    )
+
+    /**
      * Admin API - 사용자 정보 조회
      * JSON 기반 GET 요청, Bearer 토큰 인증이 필요하므로 executeAdminApiCall 사용
      */
