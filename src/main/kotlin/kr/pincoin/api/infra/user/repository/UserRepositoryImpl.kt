@@ -6,6 +6,7 @@ import kr.pincoin.api.domain.user.repository.UserRepository
 import kr.pincoin.api.domain.user.repository.UserRoleRepository
 import kr.pincoin.api.infra.user.mapper.toEntity
 import kr.pincoin.api.infra.user.mapper.toModel
+import kr.pincoin.api.infra.user.mapper.toModelWithDomainRoles
 import kr.pincoin.api.infra.user.repository.criteria.UserRoleSearchCriteria
 import kr.pincoin.api.infra.user.repository.criteria.UserSearchCriteria
 import org.springframework.data.domain.Page
@@ -70,22 +71,17 @@ class UserRepositoryImpl(
     ): User? {
         val userEntity = queryRepository.findUser(userId, criteria) ?: return null
         val userRoles = userRoleRepository.findUserRoles(userId)
-        val roles = userRoles.map { it.role }
 
-        val user = userEntity.toModel() ?: return null
-        return if (roles.isEmpty()) user else user.updateRoles(roles)
+        return userEntity.toModelWithDomainRoles(userRoles)
     }
 
     override fun findUser(
         criteria: UserSearchCriteria,
     ): User? {
-        // select 쿼리 2회로 사용자 정보와 역할 목록 조회
         val userEntity = queryRepository.findUser(criteria) ?: return null
         val userRoles = userRoleRepository.findUserRoles(userEntity.id ?: return null)
-        val roles = userRoles.map { it.role }
 
-        val user = userEntity.toModel() ?: return null
-        return if (roles.isEmpty()) user else user.updateRoles(roles)
+        return userEntity.toModelWithDomainRoles(userRoles)
     }
 
     override fun findUsers(
@@ -101,10 +97,8 @@ class UserRepositoryImpl(
         val userRolesByUserId = userRoles.groupBy { it.userId }
 
         val users = userEntityPage.content.mapNotNull { entity ->
-            val user = entity.toModel() ?: return@mapNotNull null
-            val roles = userRolesByUserId[entity.id]?.map { it.role } ?: emptyList()
-
-            if (roles.isEmpty()) user else user.updateRoles(roles)
+            val entityUserRoles = userRolesByUserId[entity.id] ?: emptyList()
+            entity.toModelWithDomainRoles(entityUserRoles)
         }
 
         return PageImpl(

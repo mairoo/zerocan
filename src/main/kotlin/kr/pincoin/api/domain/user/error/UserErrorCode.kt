@@ -43,4 +43,8 @@ enum class UserErrorCode(
         HttpStatus.INTERNAL_SERVER_ERROR,
         "Keycloak 응답 파싱 처리 중 오류가 발생했습니다",
     ),
+    ADMIN_TOKEN_FAILED(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Keycloak 관리자 토큰 획득 실패했습니다",
+    ),
 }

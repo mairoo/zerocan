@@ -1,0 +1,79 @@
+spring:
+  application:
+    name: api
+  jpa:
+    hibernate:
+      ddl-auto: validate # (spring.jpa.generate-ddl 옵션 미사용)
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        type.descriptor.sql: trace
+        jdbc.batch_size: 50
+        order_inserts: true
+        order_updates: true
+    open-in-view: false # 트랜잭션 경계 설정
+  datasource:
+    driver-class-name: org.mariadb.jdbc.Driver
+    url: jdbc:mariadb://192.168.0.1:3306/database
+    username: username
+    password: password
+    hikari:
+      connectionInitSql: "SET NAMES utf8mb4"
+  data:
+    web:
+      pageable:
+        default-page-size: 20  # 기본 페이지 사이즈
+        max-page-size: 200 # 최대 페이지 사이즈값을 기본값과 동일하게
+    redis:
+      host: zerocan-redis  # 도커 redis 컨테이너 이름
+      port: 6379 # 컨테이너 내부 포트 접근 가능
+      repositories: # RedisTemplate 사용, Redis Repository 미사용
+        enabled: false
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Keycloak JWT 검증 설정 (기존 JWT와 병행 사용)
+          issuer-uri: http://keycloak:8080/realms/zerocan
+      client:
+        registration:
+          keycloak:
+            client-id: zerocan-backend
+            client-secret: your-client-secret
+            scope: openid,profile,email
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+        provider:
+          keycloak:
+            issuer-uri: http://keycloak:8080/realms/zerocan
+            user-name-attribute: preferred_username
+
+web-config:
+  cors:
+    allowed-origins: http://localhost:3000,http://localhost:8080
+    allowed-methods: GET,POST,PUT,PATCH,DELETE,OPTIONS
+    allowed-headers: '*'
+    max-age: 3600
+
+keycloak:
+  enabled: true # 점진적 마이그레이션을 위한 활성화 플래그
+  user-migration: # 기존 사용자 매핑 전략
+    auto-create: true # 자동 생성 여부
+  # Realm 및 클라이언트 설정
+  realm: zerocan
+  client-id: zerocan-backend
+  client-secret: your-client-secret
+  server-url: http://keycloak:8080
+
+logging:
+  level:
+    root: INFO # 운영 WARN
+    org.hibernate.SQL: DEBUG  # SQL 로그 레벨 / 운영 WARN
+    org.hibernate.orm.jdbc.bind: TRACE  # 바인딩 파라미터 로그 레벨 / 운영 WARN
+    kr.pincoin.api: DEBUG # 운영 INFO
+    org.springframework.web: DEBUG
+    org.springframework.jdbc.core.JdbcTemplate: DEBUG
+    org.springframework.jdbc.core.StatementCreatorUtils: TRACE
+  file:
+    name: /app/logs/application.log

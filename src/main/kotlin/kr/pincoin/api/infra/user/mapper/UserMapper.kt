@@ -1,6 +1,7 @@
 package kr.pincoin.api.infra.user.mapper
 
 import kr.pincoin.api.domain.user.model.User
+import kr.pincoin.api.domain.user.model.UserRole
 import kr.pincoin.api.infra.user.entity.UserEntity
 import kr.pincoin.api.infra.user.entity.UserRoleEntity
 
@@ -10,6 +11,28 @@ fun UserEntity?.toModel(
     this?.let { entity ->
         val roles = userRoles
             ?.filter { it.userId == entity.id && !it.removalFields.isRemoved }
+            ?.map { it.role }
+            ?: emptyList()
+
+        User.of(
+            id = entity.id,
+            created = entity.dateTimeFields.createdAt,
+            modified = entity.dateTimeFields.modifiedAt,
+            isRemoved = entity.removalFields.isRemoved,
+            keycloakId = entity.keycloakId,
+            isActive = entity.isActive,
+            name = entity.name,
+            email = entity.email,
+            roles = roles,
+        )
+    }
+
+fun UserEntity?.toModelWithDomainRoles(
+    userRoles: List<UserRole>? = null,
+): User? =
+    this?.let { entity ->
+        val roles = userRoles
+            ?.filter { it.userId == entity.id && !it.isRemoved }
             ?.map { it.role }
             ?: emptyList()
 

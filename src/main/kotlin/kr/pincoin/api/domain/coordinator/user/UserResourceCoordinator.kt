@@ -52,6 +52,7 @@ class UserResourceCoordinator(
             logger.info { "DB 사용자 생성 완료: keycloakId=$keycloakUserId, dbUserId=${user.id}" }
 
             user
+
         } catch (e: BusinessException) {
             logger.error { "사용자 생성 비즈니스 오류: email=${request.email}, error=$e" }
 
@@ -121,8 +122,8 @@ class UserResourceCoordinator(
         val createUserRequest = KeycloakCreateUserRequest(
             username = request.email,
             email = request.email,
-            firstName = request.name,
-            lastName = "",
+            firstName = request.name, // 한국 시스템: 전체 이름을 firstName에 저장
+            lastName = "", // 빈 문자열로 설정 (400 에러 방지)
             enabled = true,
             emailVerified = false,
             credentials = listOf(

@@ -1,3 +1,8 @@
+# Keycloak 용도
+
+- Keycloak 웹 콘솔의 Groups/Role Mapping은 비워두거나 최소한으로만 사용
+- Keycloak을 순수 인증(Authentication)용으로만 사용하고, 권한(Authorization)은 백엔드에서 직접 관리
+
 # 설치
 
 ## `.env`

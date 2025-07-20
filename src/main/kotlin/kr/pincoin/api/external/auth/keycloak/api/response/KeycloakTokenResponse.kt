@@ -1,5 +1,6 @@
 package kr.pincoin.api.external.auth.keycloak.api.response
 
+import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonProperty
 
 // 토큰 응답 (로그인, 토큰 갱신, Admin 토큰)
@@ -20,6 +21,7 @@ data class KeycloakTokenResponse(
     val tokenType: String,
 
     @JsonProperty("not_before_policy")
+    @JsonAlias("not-before-policy")  // 하이픈 버전도 처리
     val notBeforePolicy: Long? = null,
 
     @JsonProperty("session_state")
