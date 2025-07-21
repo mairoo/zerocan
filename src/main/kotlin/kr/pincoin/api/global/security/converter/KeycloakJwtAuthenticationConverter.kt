@@ -36,7 +36,7 @@ class KeycloakJwtAuthenticationConverter(
         }
 
         return try {
-            val user = userRepository.findUser(
+            val user = userRepository.findUserWithRoles(
                 UserSearchCriteria(email = email, isActive = true)
             )
 

@@ -6,7 +6,9 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 
 interface UserRepository {
-    fun save(user: User): User
+    fun save(
+        user: User,
+    ): User
 
     fun findUser(
         userId: Long,
@@ -14,6 +16,15 @@ interface UserRepository {
     ): User?
 
     fun findUser(
+        criteria: UserSearchCriteria,
+    ): User?
+
+    fun findUserWithRoles(
+        userId: Long,
+        criteria: UserSearchCriteria,
+    ): User?
+
+    fun findUserWithRoles(
         criteria: UserSearchCriteria,
     ): User?
 

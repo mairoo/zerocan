@@ -61,11 +61,22 @@ class UserRepositoryImpl(
         }
 
         // 3. 최신 사용자 정보 조회 및 반환 (역할 포함)
-        return findUser(userId, UserSearchCriteria())
+        return findUserWithRoles(userId, UserSearchCriteria())
             ?: throw IllegalStateException("저장된 사용자를 조회할 수 없습니다")
     }
 
     override fun findUser(
+        userId: Long,
+        criteria: UserSearchCriteria,
+    ): User? =
+        queryRepository.findUser(userId, criteria)?.toModel()
+
+    override fun findUser(
+        criteria: UserSearchCriteria,
+    ): User? =
+        queryRepository.findUser(criteria)?.toModel()
+
+    override fun findUserWithRoles(
         userId: Long,
         criteria: UserSearchCriteria,
     ): User? {
@@ -75,7 +86,7 @@ class UserRepositoryImpl(
         return userEntity.toModelWithDomainRoles(userRoles)
     }
 
-    override fun findUser(
+    override fun findUserWithRoles(
         criteria: UserSearchCriteria,
     ): User? {
         val userEntity = queryRepository.findUser(criteria) ?: return null

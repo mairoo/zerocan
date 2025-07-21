@@ -36,9 +36,7 @@ class UserAuditorAware(
                     }
 
                     // 사용자 조회
-                    val user = userRepository.findUser(
-                        UserSearchCriteria(email = email, isActive = true)
-                    )
+                    val user = userRepository.findUser(UserSearchCriteria(email = email, isActive = true))
 
                     if (user?.id != null) {
                         Optional.of(user.id)
@@ -47,6 +45,7 @@ class UserAuditorAware(
                         Optional.empty()
                     }
                 }
+
                 else -> {
                     logger.warn { "알 수 없는 Principal 타입: ${principal?.javaClass?.name}" }
                     Optional.empty()
