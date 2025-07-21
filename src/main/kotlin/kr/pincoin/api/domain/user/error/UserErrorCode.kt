@@ -23,6 +23,18 @@ enum class UserErrorCode(
         HttpStatus.BAD_REQUEST,
         "이메일 또는 비밀번호 불일치"
     ),
+    INVALID_TOKEN(
+        HttpStatus.UNAUTHORIZED,
+        "잘못된 토큰",
+    ),
+    EXPIRED_TOKEN(
+        HttpStatus.UNAUTHORIZED,
+        "만료된 토큰",
+    ),
+    UNEXPECTED(
+        HttpStatus.UNAUTHORIZED,
+        "예상치 못한 오류",
+    ),
     LOGIN_TIMEOUT(
         HttpStatus.INTERNAL_SERVER_ERROR,
         "로그인 타임아웃",

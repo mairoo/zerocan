@@ -1,5 +1,6 @@
 package kr.pincoin.api.global.config
 
+import kr.pincoin.api.external.auth.keycloak.filter.KeycloakTokenFilter
 import kr.pincoin.api.global.properties.CorsProperties
 import kr.pincoin.api.global.security.handler.ApiAccessDeniedHandler
 import kr.pincoin.api.global.security.handler.ApiAuthenticationEntryPoint
@@ -10,6 +11,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource
@@ -20,6 +22,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 class SecurityConfig(
     private val authenticationEntryPoint: ApiAuthenticationEntryPoint,
     private val accessDeniedHandler: ApiAccessDeniedHandler,
+    private val keycloakTokenFilter: KeycloakTokenFilter,
     private val corsProperties: CorsProperties,
 ) {
     @Bean
@@ -75,6 +78,8 @@ class SecurityConfig(
                     ).permitAll()
                     .anyRequest().authenticated()
             }
+            // 4. 토큰 검증 필터 추가
+            .addFilterBefore(keycloakTokenFilter, UsernamePasswordAuthenticationFilter::class.java)
             // 5. 인증/인가 예외 처리
             .exceptionHandling { exceptions ->
                 exceptions
