@@ -11,8 +11,6 @@ import kotlin.text.substring
 
 @ConfigurationProperties(prefix = "jwt")
 data class JwtProperties(
-    val secret: String,
-    val accessTokenExpiresIn: Long = 3600L,
     val refreshTokenExpiresIn: Long = 86400L,
     val cookieDomains: List<String> = emptyList(),
 ) {
