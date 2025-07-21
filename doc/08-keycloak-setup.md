@@ -50,12 +50,12 @@ services:
       - app-network
     environment:
       - TZ=Asia/Seoul
-      - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN:-admin}
-      - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD:-admin123}
+      - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN}
+      - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
       - KC_DB=postgres
-      - KC_DB_URL=jdbc:postgresql://keycloak-postgres:5432/keycloak
-      - KC_DB_USERNAME=keycloak
-      - KC_DB_PASSWORD=${KEYCLOAK_DB_PASSWORD:-keycloak123}
+      - KC_DB_URL=jdbc:postgresql://keycloak-postgres:5432/${KEYCLOAK_DB_DATABASE}
+      - KC_DB_USERNAME=${KEYCLOAK_DB_USERNAME}
+      - KC_DB_PASSWORD=${KEYCLOAK_DB_PASSWORD}
       # - KC_HOSTNAME=keycloak
       # - KC_HOSTNAME_PORT=8080
       - KC_HOSTNAME_STRICT=false
