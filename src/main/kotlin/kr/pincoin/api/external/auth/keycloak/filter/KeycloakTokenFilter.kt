@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import kr.pincoin.api.external.auth.keycloak.error.KeycloakErrorCode
 import kr.pincoin.api.external.auth.keycloak.exception.AuthenticationException
 import kr.pincoin.api.global.response.error.ErrorResponse
 import kr.pincoin.api.global.security.error.AuthErrorCode
@@ -44,12 +45,12 @@ class KeycloakTokenFilter(
             bearerToken?.let {
                 // 토큰 형식 확인
                 if (!jwtUtils.isValidFormat(it)) {
-                    throw AuthenticationException(AuthErrorCode.INVALID_TOKEN)
+                    throw AuthenticationException(KeycloakErrorCode.INVALID_TOKEN)
                 }
 
                 // 토큰 만료 확인
                 if (jwtUtils.isTokenExpired(it)) {
-                    throw AuthenticationException(AuthErrorCode.EXPIRED_TOKEN)
+                    throw AuthenticationException(KeycloakErrorCode.EXPIRED_TOKEN)
                 }
 
                 // 이메일 추출 및 인증 처리
@@ -94,7 +95,7 @@ class KeycloakTokenFilter(
 
         } catch (_: UsernameNotFoundException) {
             // 인증 실패 시 상위 예외 핸들러에서 로깅하므로 예외만 변환하여 던짐
-            throw AuthenticationException(AuthErrorCode.INVALID_CREDENTIALS)
+            throw AuthenticationException(KeycloakErrorCode.INVALID_CREDENTIALS)
         }
     }
 

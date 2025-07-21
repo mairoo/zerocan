@@ -23,14 +23,6 @@ enum class UserErrorCode(
         HttpStatus.INTERNAL_SERVER_ERROR,
         "사용자 처리 중 시스템 오류가 발생했습니다",
     ),
-    USER_CREATE_FAILED(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        "사용자 생성에 실패했습니다",
-    ),
-    ADMIN_TOKEN_FAILED(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        "관리자 토큰 획득에 실패했습니다",
-    ),
     LOGOUT_ALL_FAILED(
         HttpStatus.INTERNAL_SERVER_ERROR,
         "전체 로그아웃에 실패했습니다",

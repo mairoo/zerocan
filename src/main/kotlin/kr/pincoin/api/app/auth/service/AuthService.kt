@@ -12,11 +12,11 @@ import kr.pincoin.api.domain.user.error.UserErrorCode
 import kr.pincoin.api.domain.user.model.User
 import kr.pincoin.api.external.auth.keycloak.api.response.KeycloakResponse
 import kr.pincoin.api.external.auth.keycloak.api.response.KeycloakTokenResponse
+import kr.pincoin.api.external.auth.keycloak.error.KeycloakErrorCode
 import kr.pincoin.api.external.auth.keycloak.service.KeycloakAdminService
 import kr.pincoin.api.external.auth.keycloak.service.KeycloakTokenService
 import kr.pincoin.api.global.constant.RedisKey
 import kr.pincoin.api.global.exception.BusinessException
-import kr.pincoin.api.global.security.error.AuthErrorCode
 import kr.pincoin.api.global.utils.IpUtils
 import kr.pincoin.api.global.utils.JwtUtils
 import org.springframework.data.redis.core.RedisTemplate
@@ -89,10 +89,10 @@ class AuthService(
 
                         // Keycloak 에러를 비즈니스 예외로 변환
                         val errorCode = when (tokenResult.errorCode) {
-                            "invalid_grant" -> AuthErrorCode.INVALID_CREDENTIALS
-                            "invalid_client" -> AuthErrorCode.INVALID_CREDENTIALS
-                            "TIMEOUT" -> AuthErrorCode.LOGIN_TIMEOUT
-                            else -> AuthErrorCode.LOGIN_FAILED
+                            "invalid_grant" -> KeycloakErrorCode.INVALID_CREDENTIALS
+                            "invalid_client" -> KeycloakErrorCode.INVALID_CREDENTIALS
+                            "TIMEOUT" -> KeycloakErrorCode.TIMEOUT
+                            else -> KeycloakErrorCode.UNKNOWN
                         }
 
                         throw BusinessException(errorCode)
@@ -155,9 +155,9 @@ class AuthService(
                         removeSessionMetadata(refreshToken)
 
                         val errorCode = when (refreshResult.errorCode) {
-                            "invalid_grant" -> AuthErrorCode.INVALID_REFRESH_TOKEN
-                            "TIMEOUT" -> AuthErrorCode.TOKEN_REFRESH_TIMEOUT
-                            else -> AuthErrorCode.TOKEN_REFRESH_FAILED
+                            "invalid_grant" -> KeycloakErrorCode.INVALID_REFRESH_TOKEN
+                            "TIMEOUT" -> KeycloakErrorCode.TIMEOUT
+                            else -> KeycloakErrorCode.UNKNOWN
                         }
 
                         throw BusinessException(errorCode)
@@ -510,7 +510,7 @@ class AuthService(
 
             is KeycloakResponse.Error -> {
                 logger.error { "Admin 토큰 획득 실패: ${result.errorCode} - ${result.errorMessage}" }
-                throw BusinessException(UserErrorCode.ADMIN_TOKEN_FAILED)
+                throw BusinessException(KeycloakErrorCode.ADMIN_TOKEN_FAILED)
             }
         }
     }
