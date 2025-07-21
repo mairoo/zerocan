@@ -59,8 +59,8 @@ enum class KeycloakApiErrorCode(
          * @param statusCode HTTP 상태 코드
          * @return 해당하는 KeycloakApiErrorCode
          */
-        fun fromStatus(statusCode: Int): KeycloakApiErrorCode {
-            return values().find { it.status == statusCode } ?: when (statusCode) {
+        fun fromStatus(statusCode: Int): KeycloakApiErrorCode =
+            KeycloakApiErrorCode.entries.find { it.status == statusCode } ?: when (statusCode) {
                 400 -> BAD_REQUEST
                 401 -> UNAUTHORIZED
                 403 -> FORBIDDEN
@@ -77,60 +77,5 @@ enum class KeycloakApiErrorCode(
                 504 -> GATEWAY_TIMEOUT
                 else -> UNKNOWN
             }
-        }
-
-        /**
-         * Keycloak 에러 코드 문자열을 기반으로 적절한 에러 코드를 반환합니다.
-         *
-         * @param errorCode Keycloak에서 반환된 에러 코드 문자열
-         * @return 해당하는 KeycloakApiErrorCode
-         */
-        fun fromKeycloakError(errorCode: String): KeycloakApiErrorCode {
-            return when (errorCode.lowercase()) {
-                "invalid_grant" -> INVALID_GRANT
-                "invalid_client" -> INVALID_CLIENT
-                "invalid_request" -> INVALID_REQUEST
-                "invalid_scope" -> INVALID_SCOPE
-                "invalid_token" -> INVALID_TOKEN
-                "unsupported_grant_type" -> UNSUPPORTED_GRANT_TYPE
-                "access_denied" -> ACCESS_DENIED
-                "user_not_found" -> USER_NOT_FOUND
-                "user_already_exists" -> USER_ALREADY_EXISTS
-                "user_disabled" -> USER_DISABLED
-                "account_temporarily_disabled" -> ACCOUNT_TEMPORARILY_DISABLED
-                "invalid_user_credentials" -> INVALID_USER_CREDENTIALS
-                "password_policy_not_met" -> PASSWORD_POLICY_NOT_MET
-                "realm_not_found" -> REALM_NOT_FOUND
-                "client_not_found" -> CLIENT_NOT_FOUND
-                "role_not_found" -> ROLE_NOT_FOUND
-                "group_not_found" -> GROUP_NOT_FOUND
-                "admin_token_expired" -> ADMIN_TOKEN_EXPIRED
-                "insufficient_scope" -> INSUFFICIENT_SCOPE
-                else -> UNKNOWN
-            }
-        }
-
-        /**
-         * 예외 타입을 기반으로 적절한 에러 코드를 반환합니다.
-         *
-         * @param exception 발생한 예외
-         * @return 해당하는 KeycloakApiErrorCode
-         */
-        fun fromException(exception: Exception): KeycloakApiErrorCode {
-            return when (exception) {
-                is java.net.SocketTimeoutException,
-                is java.util.concurrent.TimeoutException -> TIMEOUT
-
-                is java.net.ConnectException,
-                is java.net.NoRouteToHostException -> CONNECTION_ERROR
-
-                is java.net.UnknownHostException -> DNS_ERROR
-
-                is com.fasterxml.jackson.core.JsonParseException,
-                is com.fasterxml.jackson.databind.JsonMappingException -> JSON_PARSING_ERROR
-
-                else -> UNKNOWN
-            }
-        }
     }
 }

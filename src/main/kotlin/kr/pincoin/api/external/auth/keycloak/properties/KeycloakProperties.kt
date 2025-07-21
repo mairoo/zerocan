@@ -4,10 +4,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 
 @ConfigurationProperties(prefix = "keycloak")
 data class KeycloakProperties(
-    val enabled: Boolean = false,
-
-    val userMigration: UserMigration = UserMigration(),
-
     val realm: String = "zerocan",
 
     val clientId: String = "zerocan-backend",
@@ -18,7 +14,4 @@ data class KeycloakProperties(
 
     val timeout: Long = 10000,
 ) {
-    data class UserMigration(
-        val autoCreate: Boolean = false,
-    )
 }
