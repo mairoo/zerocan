@@ -30,7 +30,7 @@ class AuthController(
         @Valid @RequestBody request: SignInRequest,
         servletRequest: HttpServletRequest,
     ): ResponseEntity<ApiResponse<AccessTokenResponse>> {
-        val tokenPair = authService.login(request, servletRequest)
+        val tokenPair = authService.login(request)
 
         return ResponseEntity.ok()
             .headers(
@@ -52,7 +52,7 @@ class AuthController(
         @CookieValue(name = CookieKey.REFRESH_TOKEN_NAME) refreshToken: String,
         servletRequest: HttpServletRequest,
     ): ResponseEntity<ApiResponse<AccessTokenResponse>> {
-        val tokenPair = authService.refreshToken(refreshToken, servletRequest)
+        val tokenPair = authService.refreshToken(refreshToken)
 
         return ResponseEntity.ok()
             .headers(

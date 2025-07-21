@@ -2,6 +2,7 @@ package kr.pincoin.api.global.config
 
 import kr.pincoin.api.external.auth.keycloak.properties.KeycloakProperties
 import kr.pincoin.api.global.properties.CorsProperties
+import kr.pincoin.api.global.security.converter.KeycloakJwtAuthenticationConverter
 import kr.pincoin.api.global.security.handler.ApiAccessDeniedHandler
 import kr.pincoin.api.global.security.handler.ApiAuthenticationEntryPoint
 import org.springframework.context.annotation.Bean
@@ -12,8 +13,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
-import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
@@ -27,6 +26,7 @@ class SecurityConfig(
     private val accessDeniedHandler: ApiAccessDeniedHandler,
     private val corsProperties: CorsProperties,
     private val keycloakProperties: KeycloakProperties,
+    private val keycloakJwtAuthenticationConverter: KeycloakJwtAuthenticationConverter,
 ) {
 
     @Bean
@@ -58,8 +58,8 @@ class SecurityConfig(
             // 2. OAuth2 Resource Server 설정
             .oauth2ResourceServer { oauth2 ->
                 oauth2.jwt { jwt ->
-                    jwt.decoder(jwtDecoder())
-                    jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())
+                    jwt.decoder(jwtDecoder()) // JWT 검증 (Keycloak 공개키로 서명 검증)
+                    jwt.jwtAuthenticationConverter(keycloakJwtAuthenticationConverter) // 역할 부여 컨버터 (JWT → Spring Security 권한 변환)
                 }
             }
             // 3. 권한 설정
@@ -94,21 +94,6 @@ class SecurityConfig(
         NimbusJwtDecoder
             .withJwkSetUri("${keycloakProperties.serverUrl}/realms/${keycloakProperties.realm}/protocol/openid-connect/certs")
             .build()
-
-    @Bean
-    fun jwtAuthenticationConverter(): JwtAuthenticationConverter {
-        val jwtGrantedAuthoritiesConverter = JwtGrantedAuthoritiesConverter().apply {
-            // Keycloak에서 roles 클레임을 권한으로 변환
-            setAuthoritiesClaimName("realm_access.roles")
-            setAuthorityPrefix("ROLE_")
-        }
-
-        return JwtAuthenticationConverter().apply {
-            setJwtGrantedAuthoritiesConverter(jwtGrantedAuthoritiesConverter)
-            // 사용자명으로 사용할 클레임 설정 (기본: sub)
-            setPrincipalClaimName("preferred_username")
-        }
-    }
 
     @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {
