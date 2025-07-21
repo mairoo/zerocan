@@ -1,8 +1,8 @@
 package kr.pincoin.api.global.security.adapter
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kr.pincoin.api.domain.user.error.UserErrorCode
 import kr.pincoin.api.domain.user.repository.UserRepository
+import kr.pincoin.api.global.security.error.AuthErrorCode
 import kr.pincoin.api.infra.user.repository.criteria.UserSearchCriteria
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.userdetails.UserDetailsService
@@ -30,6 +30,6 @@ class UserDetailsServiceAdapter(
     ): UserDetails =
         UserDetailsAdapter(
             userRepository.findUser(UserSearchCriteria(email = email, isActive = true))
-                ?: throw UsernameNotFoundException(UserErrorCode.INVALID_CREDENTIALS.message)
+                ?: throw UsernameNotFoundException(AuthErrorCode.INVALID_CREDENTIALS.message)
                     .also { log.error { "이메일 없음: $email" } })
 }

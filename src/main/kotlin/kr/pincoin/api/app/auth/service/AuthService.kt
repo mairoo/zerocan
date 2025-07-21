@@ -16,6 +16,7 @@ import kr.pincoin.api.external.auth.keycloak.service.KeycloakAdminService
 import kr.pincoin.api.external.auth.keycloak.service.KeycloakTokenService
 import kr.pincoin.api.global.constant.RedisKey
 import kr.pincoin.api.global.exception.BusinessException
+import kr.pincoin.api.global.security.error.AuthErrorCode
 import kr.pincoin.api.global.utils.IpUtils
 import kr.pincoin.api.global.utils.JwtUtils
 import org.springframework.data.redis.core.RedisTemplate
@@ -88,10 +89,10 @@ class AuthService(
 
                         // Keycloak 에러를 비즈니스 예외로 변환
                         val errorCode = when (tokenResult.errorCode) {
-                            "invalid_grant" -> UserErrorCode.INVALID_CREDENTIALS
-                            "invalid_client" -> UserErrorCode.INVALID_CREDENTIALS
-                            "TIMEOUT" -> UserErrorCode.LOGIN_TIMEOUT
-                            else -> UserErrorCode.LOGIN_FAILED
+                            "invalid_grant" -> AuthErrorCode.INVALID_CREDENTIALS
+                            "invalid_client" -> AuthErrorCode.INVALID_CREDENTIALS
+                            "TIMEOUT" -> AuthErrorCode.LOGIN_TIMEOUT
+                            else -> AuthErrorCode.LOGIN_FAILED
                         }
 
                         throw BusinessException(errorCode)
@@ -154,9 +155,9 @@ class AuthService(
                         removeSessionMetadata(refreshToken)
 
                         val errorCode = when (refreshResult.errorCode) {
-                            "invalid_grant" -> UserErrorCode.INVALID_REFRESH_TOKEN
-                            "TIMEOUT" -> UserErrorCode.TOKEN_REFRESH_TIMEOUT
-                            else -> UserErrorCode.TOKEN_REFRESH_FAILED
+                            "invalid_grant" -> AuthErrorCode.INVALID_REFRESH_TOKEN
+                            "TIMEOUT" -> AuthErrorCode.TOKEN_REFRESH_TIMEOUT
+                            else -> AuthErrorCode.TOKEN_REFRESH_FAILED
                         }
 
                         throw BusinessException(errorCode)

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import kr.pincoin.api.global.response.error.ErrorResponse
-import kr.pincoin.api.global.security.error.SecurityErrorCode
+import kr.pincoin.api.global.security.error.AuthErrorCode
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.access.AccessDeniedException
@@ -27,8 +27,8 @@ class ApiAccessDeniedHandler(
 
             val errorResponse = ErrorResponse.of(
                 request = request,
-                status = SecurityErrorCode.FORBIDDEN.status,
-                message = SecurityErrorCode.FORBIDDEN.message,
+                status = AuthErrorCode.FORBIDDEN.status,
+                message = AuthErrorCode.FORBIDDEN.message,
             )
 
             objectMapper.writeValue(writer, errorResponse)

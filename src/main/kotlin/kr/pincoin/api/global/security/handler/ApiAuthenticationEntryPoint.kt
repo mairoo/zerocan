@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import kr.pincoin.api.global.response.error.ErrorResponse
-import kr.pincoin.api.global.security.error.SecurityErrorCode
+import kr.pincoin.api.global.security.error.AuthErrorCode
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.core.AuthenticationException
@@ -27,8 +27,8 @@ class ApiAuthenticationEntryPoint(
 
             val errorResponse = ErrorResponse.of(
                 request = request,
-                status = SecurityErrorCode.UNAUTHORIZED.status,
-                message = SecurityErrorCode.UNAUTHORIZED.message
+                status = AuthErrorCode.UNAUTHORIZED.status,
+                message = AuthErrorCode.UNAUTHORIZED.message
             )
 
             objectMapper.writeValue(writer, errorResponse)

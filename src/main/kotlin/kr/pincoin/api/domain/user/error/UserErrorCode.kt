@@ -16,79 +16,23 @@ enum class UserErrorCode(
         "사용자가 비활성화 상태입니다",
     ),
     ALREADY_EXISTS(
-        HttpStatus.BAD_REQUEST,
+        HttpStatus.CONFLICT,
         "아이디 또는 이메일이 이미 존재합니다",
-    ),
-    INVALID_CREDENTIALS(
-        HttpStatus.BAD_REQUEST,
-        "이메일 또는 비밀번호 불일치"
-    ),
-    INVALID_TOKEN(
-        HttpStatus.UNAUTHORIZED,
-        "잘못된 토큰",
-    ),
-    EXPIRED_TOKEN(
-        HttpStatus.UNAUTHORIZED,
-        "만료된 토큰",
-    ),
-    UNEXPECTED(
-        HttpStatus.UNAUTHORIZED,
-        "예상치 못한 오류",
-    ),
-    LOGIN_TIMEOUT(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        "로그인 타임아웃",
-    ),
-    LOGIN_FAILED(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        "로그인 실패",
     ),
     SYSTEM_ERROR(
         HttpStatus.INTERNAL_SERVER_ERROR,
-        "사용자 생성 중 시스템 오류가 발생했습니다",
-    ),
-    AUTHENTICATION_FAILED(
-        HttpStatus.UNAUTHORIZED,
-        "인증에 실패했습니다",
-    ),
-    AUTHENTICATION_PARSING_ERROR(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        "인증 응답 파싱 처리 중 오류가 발생했습니다",
+        "사용자 처리 중 시스템 오류가 발생했습니다",
     ),
     USER_CREATE_FAILED(
-        HttpStatus.BAD_REQUEST,
-        "Keycloak 사용자 생성에 실패했습니다",
-    ),
-    KEYCLOAK_PARSING_ERROR(
         HttpStatus.INTERNAL_SERVER_ERROR,
-        "Keycloak 응답 파싱 처리 중 오류가 발생했습니다",
+        "사용자 생성에 실패했습니다",
     ),
     ADMIN_TOKEN_FAILED(
         HttpStatus.INTERNAL_SERVER_ERROR,
-        "Keycloak 관리자 토큰 획득 실패했습니다",
-    ),
-    INVALID_REFRESH_TOKEN(
-        HttpStatus.BAD_REQUEST,
-        "리프레시 토큰이 올바르지 않습니다",
-    ),
-    TOKEN_REFRESH_TIMEOUT(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        "리프레시 토큰 타임아웃 발생했습니다",
-    ),
-    TOKEN_REFRESH_FAILED(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        "리프레시 실패했습니다",
+        "관리자 토큰 획득에 실패했습니다",
     ),
     LOGOUT_ALL_FAILED(
         HttpStatus.INTERNAL_SERVER_ERROR,
-        "전체 로그아웃 실패했습니다",
-    ),
-    KEYCLOAK_TIMEOUT(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        "Keycloak 타임아웃",
-    ),
-    KEYCLOAK_SYSTEM_ERROR(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        "Keycloak 서버 오류",
+        "전체 로그아웃에 실패했습니다",
     ),
 }

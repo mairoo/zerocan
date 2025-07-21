@@ -14,6 +14,7 @@ import kr.pincoin.api.external.auth.keycloak.api.response.*
 import kr.pincoin.api.external.auth.keycloak.properties.KeycloakProperties
 import kr.pincoin.api.external.auth.keycloak.service.KeycloakApiClient
 import kr.pincoin.api.global.exception.BusinessException
+import kr.pincoin.api.global.security.error.AuthErrorCode
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -100,10 +101,10 @@ class UserResourceCoordinator(
                 logger.error { "사용자 인증 실패: email=$email, error=${response.errorCode}" }
 
                 val errorCode = when (response.errorCode) {
-                    "invalid_grant" -> UserErrorCode.INVALID_CREDENTIALS
-                    "invalid_client" -> UserErrorCode.INVALID_CREDENTIALS
-                    "TIMEOUT" -> UserErrorCode.LOGIN_TIMEOUT
-                    else -> UserErrorCode.AUTHENTICATION_FAILED
+                    "invalid_grant" -> AuthErrorCode.INVALID_CREDENTIALS
+                    "invalid_client" -> AuthErrorCode.INVALID_CREDENTIALS
+                    "TIMEOUT" -> AuthErrorCode.LOGIN_TIMEOUT
+                    else -> AuthErrorCode.AUTHENTICATION_FAILED
                 }
 
                 throw BusinessException(errorCode)
@@ -146,8 +147,8 @@ class UserResourceCoordinator(
                 logger.error { "Keycloak 사용자 생성 실패: email=${request.email}, error=${response.errorCode}" }
 
                 val errorCode = when (response.errorCode) {
-                    "TIMEOUT" -> UserErrorCode.KEYCLOAK_TIMEOUT
-                    "SYSTEM_ERROR" -> UserErrorCode.KEYCLOAK_SYSTEM_ERROR
+                    "TIMEOUT" -> AuthErrorCode.KEYCLOAK_TIMEOUT
+                    "SYSTEM_ERROR" -> AuthErrorCode.KEYCLOAK_SYSTEM_ERROR
                     else -> UserErrorCode.USER_CREATE_FAILED
                 }
 
