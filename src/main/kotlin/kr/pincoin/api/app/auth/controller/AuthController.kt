@@ -121,8 +121,7 @@ class AuthController(
                 .maxAge(
                     when { // rememberMe와 실제 토큰 만료시간에 따른 쿠키 만료시간 설정
                         cookieValue == null -> 0 // 쿠키 삭제
-                        rememberMe -> refreshExpiresIn
-                            ?: keycloakProperties.refreshTokenExpiresIn // 실제 토큰 만료시간 우선, fallback으로 설정값
+                        rememberMe -> requireNotNull(refreshExpiresIn) { "refreshExpiresIn == null" }
                         else -> -1 // rememberMe=false: 세션 쿠키 (브라우저 종료시 삭제)
                     }
                 )

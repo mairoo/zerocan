@@ -192,7 +192,6 @@ keycloak:
   timeout: 5000
   cookie-domains: # 도메인에 프로토콜 및 포트번호 미포함, 서브도메인으로 지정하면 다른 서브도메인에서 접근 불가
     - localhost
-  refresh-token-expires-in: 86400 # 60 * 60 * 24(24 hours)
 ```
 
 ## external.auth.keycloak 주요 파일 추가

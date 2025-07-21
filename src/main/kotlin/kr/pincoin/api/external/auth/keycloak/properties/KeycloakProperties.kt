@@ -16,8 +16,6 @@ data class KeycloakProperties(
     val timeout: Long = 10000,
 
     val cookieDomains: List<String> = emptyList(),
-
-    val refreshTokenExpiresIn: Long = 86400L,
 ) {
     fun findCookieDomain(requestDomain: String): String {
         // 도메인에서 포트 제거
