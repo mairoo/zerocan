@@ -58,8 +58,10 @@ class SecurityConfig(
             // 2. OAuth2 Resource Server 설정
             .oauth2ResourceServer { oauth2 ->
                 oauth2.jwt { jwt ->
-                    jwt.decoder(jwtDecoder()) // JWT 검증 (Keycloak 공개키로 서명 검증)
-                    jwt.jwtAuthenticationConverter(keycloakJwtAuthenticationConverter) // 역할 부여 컨버터 (JWT → Spring Security 권한 변환)
+                    // JWT 검증 (Keycloak 공개키로 서명 검증)
+                    jwt.decoder(jwtDecoder())
+                    // 역할 부여 컨버터 (JWT → Spring Security 권한 변환)
+                    jwt.jwtAuthenticationConverter(keycloakJwtAuthenticationConverter)
                 }
             }
             // 3. 권한 설정

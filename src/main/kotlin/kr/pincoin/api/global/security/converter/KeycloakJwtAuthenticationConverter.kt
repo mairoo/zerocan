@@ -19,12 +19,10 @@ class KeycloakJwtAuthenticationConverter(
     private val logger = KotlinLogging.logger {}
 
     override fun convert(jwt: Jwt): AbstractAuthenticationToken {
-        // JWT에서 사용자 정보 추출
         val email = jwt.getClaimAsString("preferred_username")
             ?: jwt.getClaimAsString("email")
             ?: jwt.subject
 
-        // 백엔드 DB에서 사용자의 실제 역할 조회
         val authorities = getUserAuthorities(email)
 
         logger.debug { "JWT 인증 변환: email=$email, authorities=$authorities" }
@@ -39,27 +37,22 @@ class KeycloakJwtAuthenticationConverter(
         }
 
         return try {
-            // 백엔드 DB에서 사용자 조회
             val user = userRepository.findUser(
                 UserSearchCriteria(email = email, isActive = true)
             )
 
             if (user != null) {
-                // 사용자의 역할을 Spring Security 권한으로 변환
-                val dbAuthorities = user.roles.map { role ->
-                    SimpleGrantedAuthority("ROLE_${role.name}")
+                val authorities = user.roles.map { role ->
+                    SimpleGrantedAuthority(role.name)
                 }
-
-                logger.debug { "DB에서 조회한 권한: email=$email, roles=${user.roles}" }
-                dbAuthorities
+                logger.debug { "사용자 권한 조회 완료: email=$email, roles=${user.roles.map { it.name }}" }
+                authorities
             } else {
                 logger.warn { "사용자를 찾을 수 없음: email=$email" }
-                // 사용자가 DB에 없으면 기본 권한만 부여
                 listOf(SimpleGrantedAuthority("ROLE_MEMBER"))
             }
         } catch (e: Exception) {
             logger.error(e) { "권한 조회 중 오류 발생: email=$email" }
-            // 에러 발생 시 기본 권한 부여
             listOf(SimpleGrantedAuthority("ROLE_MEMBER"))
         }
     }
