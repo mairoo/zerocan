@@ -3,13 +3,15 @@
 - [AuditorFields](/src/main/kotlin/kr/pincoin/api/infra/common/jpa/AuditorFields.kt)
     - `created_by`
     - `modified_by`
+  - `@EnableJpaAuditing`
 - [DateTimeFields](/src/main/kotlin/kr/pincoin/api/infra/common/jpa/DateTimeFields.kt)
     - `created_at`
     - `modified_at`
+    - `@EnableJpaAuditing(auditorAwareRef = "userAuditorAware")`
 - [RemovalFields](/src/main/kotlin/kr/pincoin/api/infra/common/jpa/RemovalFields.kt)
     - `is_removed`
 
-# Audit 기능
+# 날짜 감사
 
 - `domain.audit` 패키지
 - `infra.audit` 패키지
@@ -73,12 +75,23 @@ class UserEntity private constructor(
 }
 ```
 
-# `UserAuditorAware` 지원
+# 변경 수정 감사: `UserAuditorAware` 지원
 
 ```kotlin
 @Component
 class UserAuditorAware : AuditorAware<Long> {
-    override fun getCurrentAuditor(
-    ): Optional<Long> = Optional.empty()
+  override fun getCurrentAuditor(
+  ): Optional<Long> =
+    SecurityContextHolder
+      .getContext()
+      .authentication
+      ?.takeIf { it.isAuthenticated }
+      ?.principal
+      ?.let { principal ->
+        when (principal) {
+          is UserDetailsAdapter -> Optional.of(principal.user.id ?: -1L)
+          else -> Optional.empty()
+        }
+      } ?: Optional.empty()
 }
 ```
