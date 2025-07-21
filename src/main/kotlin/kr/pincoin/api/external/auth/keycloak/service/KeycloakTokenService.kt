@@ -22,7 +22,7 @@ class KeycloakTokenService(
     suspend fun login(
         username: String,
         password: String,
-    ): KeycloakResponse<KeycloakTokenData> = withContext(Dispatchers.IO) {
+    ): KeycloakResponse<KeycloakTokenResponse> = withContext(Dispatchers.IO) {
         try {
             withTimeout(keycloakProperties.timeout) {
                 val request = KeycloakLoginRequest(
@@ -46,7 +46,7 @@ class KeycloakTokenService(
      */
     suspend fun refreshToken(
         refreshToken: String
-    ): KeycloakResponse<KeycloakTokenData> = withContext(Dispatchers.IO) {
+    ): KeycloakResponse<KeycloakTokenResponse> = withContext(Dispatchers.IO) {
         try {
             withTimeout(keycloakProperties.timeout) {
                 val request = KeycloakRefreshTokenRequest(
@@ -69,7 +69,7 @@ class KeycloakTokenService(
      */
     suspend fun logout(
         refreshToken: String
-    ): KeycloakResponse<KeycloakLogoutData> = withContext(Dispatchers.IO) {
+    ): KeycloakResponse<KeycloakLogoutResponse> = withContext(Dispatchers.IO) {
         try {
             withTimeout(keycloakProperties.timeout) {
                 val request = KeycloakLogoutRequest(

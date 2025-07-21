@@ -11,7 +11,7 @@ import kr.pincoin.api.domain.coordinator.user.UserResourceCoordinator
 import kr.pincoin.api.domain.user.error.UserErrorCode
 import kr.pincoin.api.domain.user.model.User
 import kr.pincoin.api.external.auth.keycloak.api.response.KeycloakResponse
-import kr.pincoin.api.external.auth.keycloak.api.response.KeycloakTokenData
+import kr.pincoin.api.external.auth.keycloak.api.response.KeycloakTokenResponse
 import kr.pincoin.api.external.auth.keycloak.service.KeycloakAdminService
 import kr.pincoin.api.external.auth.keycloak.service.KeycloakTokenService
 import kr.pincoin.api.global.constant.RedisKey
@@ -292,7 +292,7 @@ class AuthService(
      * 토큰 자체는 저장하지 않고 JWT ID(jti)를 키로 사용하여 메타데이터만 저장
      */
     private fun storeSessionMetadata(
-        tokenData: KeycloakTokenData,
+        tokenData: KeycloakTokenResponse,
         email: String,
         request: HttpServletRequest,
     ) {
@@ -335,7 +335,7 @@ class AuthService(
      */
     private fun updateSessionMetadata(
         oldRefreshToken: String,
-        newTokenData: KeycloakTokenData,
+        newTokenData: KeycloakTokenResponse,
         request: HttpServletRequest
     ) {
         try {

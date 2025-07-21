@@ -64,7 +64,7 @@ class KeycloakUserService(
     /**
      * 사용자 정보를 조회합니다.
      */
-    suspend fun getUser(userId: String): KeycloakResponse<KeycloakUserData> = withContext(Dispatchers.IO) {
+    suspend fun getUser(userId: String): KeycloakResponse<KeycloakUserResponse> = withContext(Dispatchers.IO) {
         try {
             withTimeout(keycloakProperties.timeout) {
                 // 1. Admin 토큰 획득
@@ -96,7 +96,7 @@ class KeycloakUserService(
         email: String? = null,
         enabled: Boolean? = null,
         emailVerified: Boolean? = null,
-    ): KeycloakResponse<KeycloakUserData> = withContext(Dispatchers.IO) {
+    ): KeycloakResponse<KeycloakUserResponse> = withContext(Dispatchers.IO) {
         try {
             withTimeout(keycloakProperties.timeout) {
                 // 1. Admin 토큰 획득
@@ -129,7 +129,7 @@ class KeycloakUserService(
     /**
      * 사용자를 삭제합니다.
      */
-    suspend fun deleteUser(userId: String): KeycloakResponse<KeycloakLogoutData> = withContext(Dispatchers.IO) {
+    suspend fun deleteUser(userId: String): KeycloakResponse<KeycloakLogoutResponse> = withContext(Dispatchers.IO) {
         try {
             withTimeout(keycloakProperties.timeout) {
                 // 1. Admin 토큰 획득
@@ -154,7 +154,7 @@ class KeycloakUserService(
     /**
      * Access Token으로 사용자 정보를 조회합니다.
      */
-    suspend fun getUserInfo(accessToken: String): KeycloakResponse<KeycloakUserInfoData> = withContext(Dispatchers.IO) {
+    suspend fun getUserInfo(accessToken: String): KeycloakResponse<KeycloakUserInfoResponse> = withContext(Dispatchers.IO) {
         try {
             withTimeout(keycloakProperties.timeout) {
                 keycloakApiClient.getUserInfo(accessToken)
