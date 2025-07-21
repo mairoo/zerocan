@@ -15,7 +15,6 @@ import org.springframework.stereotype.Component
 class KeycloakJwtAuthenticationConverter(
     private val userRepository: UserRepository,
 ) : Converter<Jwt, AbstractAuthenticationToken> {
-
     private val logger = KotlinLogging.logger {}
 
     override fun convert(jwt: Jwt): AbstractAuthenticationToken {
