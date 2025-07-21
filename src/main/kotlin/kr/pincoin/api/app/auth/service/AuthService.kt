@@ -20,6 +20,7 @@ import kr.pincoin.api.global.utils.IpUtils
 import kr.pincoin.api.global.utils.JwtUtils
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.stereotype.Service
+import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
 
 @Service
@@ -228,24 +229,11 @@ class AuthService(
 
                     if (sessionEmail == email) {
                         // 개별 세션의 refresh token으로 Keycloak 로그아웃 시도
-                        val refreshToken = redisTemplate.opsForHash<String, String>()
-                            .get(sessionKey, RedisKey.REFRESH_TOKEN_REFERENCE)
+                        val refreshTokenHash = redisTemplate.opsForHash<String, String>()
+                            .get(sessionKey, RedisKey.REFRESH_TOKEN_HASH)
 
-                        if (!refreshToken.isNullOrBlank()) {
-                            try {
-                                val logoutResult = keycloakTokenService.logout(refreshToken)
-                                when (logoutResult) {
-                                    is KeycloakResponse.Success -> {
-                                        logger.debug { "개별 세션 Keycloak 로그아웃 성공: sessionKey=$sessionKey" }
-                                    }
-
-                                    is KeycloakResponse.Error -> {
-                                        logger.warn { "개별 세션 Keycloak 로그아웃 실패: sessionKey=$sessionKey, error=${logoutResult.errorCode}" }
-                                    }
-                                }
-                            } catch (e: Exception) {
-                                logger.warn { "개별 세션 Keycloak 로그아웃 실패: sessionKey=$sessionKey, error=${e.message}" }
-                            }
+                        if (!refreshTokenHash.isNullOrBlank()) {
+                            logger.debug { "세션 해시 확인: $refreshTokenHash - 세션 삭제 진행" }
                         }
 
                         // Redis에서 세션 메타데이터 제거
@@ -309,6 +297,9 @@ class AuthService(
             val userAgent = request.getHeader("User-Agent") ?: ""
             val sessionKey = "${RedisKey.SESSION_PREFIX}$jti"
 
+            // 토큰 해시 생성 (원본 토큰 대신 해시만 저장)
+            val tokenHash = hashRefreshToken(refreshToken)
+
             // 세션 메타데이터 저장 (토큰 자체는 저장하지 않음)
             redisTemplate.opsForHash<String, String>().putAll(
                 sessionKey,
@@ -318,8 +309,7 @@ class AuthService(
                     RedisKey.USER_AGENT to userAgent,
                     RedisKey.ISSUED_AT to System.currentTimeMillis().toString(),
                     RedisKey.LAST_ACCESS_AT to System.currentTimeMillis().toString(),
-                    // 참조용으로만 저장 (Keycloak 로그아웃시 필요)
-                    RedisKey.REFRESH_TOKEN_REFERENCE to refreshToken
+                    RedisKey.REFRESH_TOKEN_HASH to tokenHash
                 )
             )
 
@@ -359,13 +349,16 @@ class AuthService(
                 val currentUserAgent = request.getHeader("User-Agent") ?: ""
                 val currentTime = System.currentTimeMillis().toString()
 
+                // 새 토큰 해시 생성
+                val newTokenHash = hashRefreshToken(newRefreshToken)
+
                 // 새로운 세션 키로 데이터 이전 및 업데이트
                 val updatedSession = existingSession.toMutableMap().apply {
                     // 기본 정보는 유지하되 갱신 시점의 정보로 업데이트
                     put(RedisKey.IP_ADDRESS, currentIp)
                     put(RedisKey.USER_AGENT, currentUserAgent)
                     put(RedisKey.LAST_ACCESS_AT, currentTime)
-                    put(RedisKey.REFRESH_TOKEN_REFERENCE, newRefreshToken)
+                    put(RedisKey.REFRESH_TOKEN_HASH, newTokenHash)
 
                     // 갱신 횟수 추가 (선택사항)
                     val refreshCount = (get(RedisKey.REFRESH_COUNT)?.toIntOrNull() ?: 0) + 1
@@ -402,6 +395,21 @@ class AuthService(
 
         } catch (e: Exception) {
             logger.warn { "세션 메타데이터 제거 실패: error=${e.message}" }
+        }
+    }
+
+    /**
+     * 리프레시 토큰을 해싱하여 저장 (원본 토큰 대신 해시값만 저장)
+     */
+    private fun hashRefreshToken(token: String): String {
+        return try {
+            MessageDigest.getInstance("SHA-256")
+                .digest(token.toByteArray())
+                .fold("") { str, byte -> str + "%02x".format(byte) }
+        } catch (e: Exception) {
+            logger.warn { "토큰 해싱 실패: ${e.message}" }
+            // 해싱 실패시 빈 문자열 반환
+            ""
         }
     }
 

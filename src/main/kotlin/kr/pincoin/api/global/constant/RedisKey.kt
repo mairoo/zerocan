@@ -13,6 +13,6 @@ object RedisKey {
     const val USER_AGENT = "user_agent"
     const val ISSUED_AT = "issued_at"
     const val LAST_ACCESS_AT = "last_access_at"
-    const val REFRESH_TOKEN_REFERENCE = "refresh_token_ref"
     const val REFRESH_COUNT = "refresh_count"
+    const val REFRESH_TOKEN_HASH = "refresh_token_hash"
 }
