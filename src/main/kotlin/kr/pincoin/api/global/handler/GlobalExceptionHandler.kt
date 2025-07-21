@@ -1,7 +1,8 @@
-package kr.pincoin.api.global.exception
+package kr.pincoin.api.global.handler
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.servlet.http.HttpServletRequest
+import kr.pincoin.api.global.exception.BusinessException
 import kr.pincoin.api.global.response.error.ErrorResponse
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.ExceptionHandler
@@ -29,7 +30,7 @@ class GlobalExceptionHandler {
         ResponseEntity
             .status(e.errorCode.status)
             .body(
-                ErrorResponse.of(
+                ErrorResponse.Companion.of(
                     request = request,
                     status = e.errorCode.status,
                     message = e.message ?: e.errorCode.message

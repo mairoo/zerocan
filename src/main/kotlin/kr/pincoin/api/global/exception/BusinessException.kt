@@ -1,6 +1,6 @@
 package kr.pincoin.api.global.exception
 
-import kr.pincoin.api.global.security.exception.error.ErrorCode
+import kr.pincoin.api.global.error.ErrorCode
 
 class BusinessException(
     val errorCode: ErrorCode,

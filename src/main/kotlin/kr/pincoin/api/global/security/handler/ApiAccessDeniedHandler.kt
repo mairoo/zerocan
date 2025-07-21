@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import kr.pincoin.api.global.response.error.ErrorResponse
-import kr.pincoin.api.global.security.exception.error.SecurityErrorCode
+import kr.pincoin.api.global.security.error.SecurityErrorCode
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.access.AccessDeniedException

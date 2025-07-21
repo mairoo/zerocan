@@ -1,5 +1,6 @@
-package kr.pincoin.api.global.security.exception.error
+package kr.pincoin.api.global.security.error
 
+import kr.pincoin.api.global.error.ErrorCode
 import org.springframework.http.HttpStatus
 
 enum class SecurityErrorCode(

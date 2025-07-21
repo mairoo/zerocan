@@ -1,6 +1,6 @@
 package kr.pincoin.api.domain.user.error
 
-import kr.pincoin.api.global.security.exception.error.ErrorCode
+import kr.pincoin.api.global.error.ErrorCode
 import org.springframework.http.HttpStatus
 
 enum class UserErrorCode(
