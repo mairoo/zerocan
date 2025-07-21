@@ -9,6 +9,7 @@ import kr.pincoin.api.global.response.error.ErrorResponse
 import kr.pincoin.api.global.security.error.AuthErrorCode
 import org.apache.coyote.BadRequestException
 import org.springframework.dao.DataIntegrityViolationException
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.security.authorization.AuthorizationDeniedException
@@ -16,8 +17,11 @@ import org.springframework.web.HttpMediaTypeNotSupportedException
 import org.springframework.web.HttpRequestMethodNotSupportedException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.MissingRequestCookieException
+import org.springframework.web.bind.MissingServletRequestParameterException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.context.request.async.AsyncRequestTimeoutException
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
 import org.springframework.web.multipart.MaxUploadSizeExceededException
 import org.springframework.web.servlet.resource.NoResourceFoundException
 import java.sql.SQLIntegrityConstraintViolationException
@@ -58,6 +62,10 @@ class GlobalExceptionHandler {
 
     /**
      * AuthorizationDeniedException 예외 핸들러 메서드
+     *
+     * @param e 발생한 AuthorizationDeniedException
+     * @param request HTTP 요청 정보
+     * @return 권한 없음 에러 응답 엔티티
      */
     @ExceptionHandler(AuthorizationDeniedException::class)
     private fun handleAuthorizationDeniedException(
@@ -76,6 +84,9 @@ class GlobalExceptionHandler {
 
     /**
      * NullPointerException 예외 핸들러 메서드
+     *
+     * @param e 발생한 NullPointerException
+     * @param request HTTP 요청 정보
      * @return 에러 응답 엔티티
      *         - User.getId()가 null인 경우: 인증 필요 에러 응답
      *         - 그 외의 경우: 내부 서버 오류 응답
@@ -118,6 +129,9 @@ class GlobalExceptionHandler {
 
     /**
      * MethodArgumentNotValidException 예외 핸들러 메서드
+     *
+     * @param e 발생한 MethodArgumentNotValidException
+     * @param request HTTP 요청 정보
      * @return 유효하지 않은 입력값 에러 응답 엔티티 (검증 오류 정보 포함)
      */
     @ExceptionHandler(MethodArgumentNotValidException::class)
@@ -164,12 +178,34 @@ class GlobalExceptionHandler {
         )
         .also { log.error { "[Illegal Argument] ${e.message}" } }
 
+    /**
+     * MethodArgumentTypeMismatchException 예외 핸들러 메서드
+     */
+    @ExceptionHandler(MethodArgumentTypeMismatchException::class)
+    private fun handleMethodArgumentTypeMismatchException(
+        e: MethodArgumentTypeMismatchException,
+        request: HttpServletRequest,
+    ) = ResponseEntity
+        .status(CommonErrorCode.INVALID_INPUT_VALUE.status)
+        .body(
+            ErrorResponse.of(
+                request,
+                CommonErrorCode.INVALID_INPUT_VALUE.status,
+                "잘못된 파라미터 타입입니다: ${e.name}"
+            )
+        )
+        .also { log.error { "[Type Mismatch] ${e.message}" } }
+
     // ========================================
     // 4. HTTP 요청 관련 예외 처리
     // ========================================
 
     /**
      * BadRequestException 예외 핸들러 메서드
+     *
+     * @param e 발생한 BadRequestException
+     * @param request HTTP 요청 정보
+     * @return 유효하지 않은 요청 에러 응답 엔티티
      */
     @ExceptionHandler(BadRequestException::class)
     private fun handleBadRequestException(
@@ -188,6 +224,10 @@ class GlobalExceptionHandler {
 
     /**
      * HttpMessageNotReadableException 예외 핸들러 메서드
+     *
+     * @param e 발생한 HttpMessageNotReadableException
+     * @param request HTTP 요청 정보
+     * @return 요청 본문 누락 에러 응답 엔티티
      */
     @ExceptionHandler(HttpMessageNotReadableException::class)
     private fun handleHttpMessageNotReadableException(
@@ -206,6 +246,10 @@ class GlobalExceptionHandler {
 
     /**
      * MissingRequestCookieException 예외 핸들러 메서드
+     *
+     * @param e 발생한 MissingRequestCookieException
+     * @param request HTTP 요청 정보
+     * @return 요청 쿠키 누락 에러 응답 엔티티
      */
     @ExceptionHandler(MissingRequestCookieException::class)
     private fun handleMissingRequestCookieException(
@@ -223,7 +267,29 @@ class GlobalExceptionHandler {
         .also { log.error { "[Missing Cookie] ${e.message}" } }
 
     /**
+     * MissingServletRequestParameterException 예외 핸들러 메서드
+     */
+    @ExceptionHandler(MissingServletRequestParameterException::class)
+    private fun handleMissingServletRequestParameterException(
+        e: MissingServletRequestParameterException,
+        request: HttpServletRequest,
+    ) = ResponseEntity
+        .status(CommonErrorCode.INVALID_INPUT_VALUE.status)
+        .body(
+            ErrorResponse.of(
+                request,
+                CommonErrorCode.INVALID_INPUT_VALUE.status,
+                "필수 파라미터가 누락되었습니다: ${e.parameterName}"
+            )
+        )
+        .also { log.error { "[Missing Parameter] ${e.message}" } }
+
+    /**
      * HttpRequestMethodNotSupportedException 예외 핸들러 메서드
+     *
+     * @param e 발생한 HttpRequestMethodNotSupportedException
+     * @param request HTTP 요청 정보
+     * @return 허용되지 않은 HTTP 메서드 에러 응답 엔티티
      */
     @ExceptionHandler(HttpRequestMethodNotSupportedException::class)
     private fun handleHttpRequestMethodNotSupportedException(
@@ -242,6 +308,10 @@ class GlobalExceptionHandler {
 
     /**
      * HttpMediaTypeNotSupportedException 예외 핸들러 메서드
+     *
+     * @param e 발생한 HttpMediaTypeNotSupportedException
+     * @param request HTTP 요청 정보
+     * @return 지원되지 않는 미디어 타입 에러 응답 엔티티
      */
     @ExceptionHandler(HttpMediaTypeNotSupportedException::class)
     private fun handleHttpMediaTypeNotSupportedException(
@@ -260,6 +330,10 @@ class GlobalExceptionHandler {
 
     /**
      * MaxUploadSizeExceededException 예외 핸들러 메서드
+     *
+     * @param e 발생한 MaxUploadSizeExceededException
+     * @param request HTTP 요청 정보
+     * @return 파일 크기 초과 에러 응답 엔티티
      */
     @ExceptionHandler(MaxUploadSizeExceededException::class)
     private fun handleMaxUploadSizeExceededException(
@@ -282,6 +356,10 @@ class GlobalExceptionHandler {
 
     /**
      * NoResourceFoundException 예외 핸들러 메서드
+     *
+     * @param e 발생한 NoResourceFoundException
+     * @param request HTTP 요청 정보
+     * @return 리소스 찾을 수 없음 에러 응답 엔티티
      */
     @ExceptionHandler(NoResourceFoundException::class)
     private fun handleNoResourceFoundException(
@@ -300,6 +378,10 @@ class GlobalExceptionHandler {
 
     /**
      * EntityNotFoundException 예외 핸들러 메서드
+     *
+     * @param e 발생한 EntityNotFoundException
+     * @param request HTTP 요청 정보
+     * @return 엔티티를 찾을 수 없음 에러 응답 엔티티
      */
     @ExceptionHandler(EntityNotFoundException::class)
     private fun handleEntityNotFoundException(
@@ -323,6 +405,8 @@ class GlobalExceptionHandler {
     /**
      * DataIntegrityViolationException 예외 핸들러 메서드
      *
+     * @param e 발생한 DataIntegrityViolationException
+     * @param request HTTP 요청 정보
      * @return 데이터 무결성 위반 에러 응답 엔티티
      *         - 중복 키 오류인 경우: 중복 키 에러 응답
      *         - 외래 키 제약 조건 위반인 경우: 외래 키 제약 조건 위반 에러 응답
@@ -356,6 +440,10 @@ class GlobalExceptionHandler {
 
     /**
      * IllegalStateException 예외 핸들러 메서드
+     *
+     * @param e 발생한 IllegalStateException
+     * @param request HTTP 요청 정보
+     * @return 서버 상태 오류 응답 엔티티
      */
     @ExceptionHandler(IllegalStateException::class)
     private fun handleIllegalStateException(
@@ -373,7 +461,29 @@ class GlobalExceptionHandler {
         .also { log.error { "[Illegal State] ${e.message}" } }
 
     /**
+     * AsyncRequestTimeoutException 예외 핸들러 메서드
+     */
+    @ExceptionHandler(AsyncRequestTimeoutException::class)
+    private fun handleAsyncRequestTimeoutException(
+        e: AsyncRequestTimeoutException,
+        request: HttpServletRequest,
+    ) = ResponseEntity
+        .status(HttpStatus.SERVICE_UNAVAILABLE)
+        .body(
+            ErrorResponse.of(
+                request,
+                HttpStatus.SERVICE_UNAVAILABLE,
+                "요청 처리 시간이 초과되었습니다"
+            )
+        )
+        .also { log.error { "[Async Timeout] ${e.message}" } }
+
+    /**
      * 예기치 못한 내부 서버 오류를 처리하는 메서드
+     *
+     * @param e 발생한 Exception
+     * @param request HTTP 요청 정보
+     * @return 내부 서버 오류 응답 엔티티
      */
     @ExceptionHandler(Exception::class)
     private fun handleException(
