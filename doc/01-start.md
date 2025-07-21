@@ -65,3 +65,34 @@ spring:
     hikari:
       connectionInitSql: "SET NAMES utf8mb4"
 ```
+
+# 개발환경 설정
+
+```
+~/Projects/zerocan/backend/.env
+~/Projects/zerocan/backend/docker-compose.yml
+~/Projects/zerocan/backend/repo/
+~/Projects/zerocan/backend/repo/src/main/resources/application-local.yml
+```
+
+```
+docker compose up -d redis 
+docker compose up -d keycloak-postgres keycloak 
+```
+
+keycloak 설정
+
+- realm: zerocan
+- client: zerocan-backend
+
+스프링부트 설정: `application-local.yml`
+
+```
+>     url: jdbc:mariadb://192.168.0.1:3306/database
+>     username: username
+>     password: password
+
+>             client-secret: your-client-secret
+
+>   client-secret: your-client-secret
+```
