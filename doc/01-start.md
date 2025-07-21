@@ -92,3 +92,11 @@ keycloak 설정
 
 >   client-secret: your-client-secret
 ```
+
+개발 환경 포트 목록
+
+- mariadb: 13306
+- keycloak-postgres: 15432
+- keycloak: 8082
+- backend: 8080
+- frontend: 8081

@@ -111,6 +111,16 @@ spring:
         enabled: false
 ```
 
+## MariaDB 도커 실행
+
+```shell
+docker compose exec mariadb mariadb -u root -p
+Enter password: 
+
+docker compose exec mariadb mariadb -u zerocan -p zerocan
+Enter password: 
+```
+
 # 스프링 백엔드 도커 빌드
 
 ## [Dockerfile.local](/Dockerfile.local) 추가

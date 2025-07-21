@@ -102,6 +102,12 @@ docker compose ps
 
 # 도커 로그 확인
 docker compose logs -f keycloak
+
+# psql 클라이언트로 직접 접근
+docker compose exec keycloak-postgres psql -U keycloak -d keycloak
+
+# postgres 유저로 접근
+docker compose exec keycloak-postgres psql -U postgres
 ```
 
 # 웹 콘솔 설정
