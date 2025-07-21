@@ -7,12 +7,14 @@ import kotlinx.coroutines.withTimeout
 import kr.pincoin.api.external.auth.keycloak.api.request.KeycloakCreateUserRequest
 import kr.pincoin.api.external.auth.keycloak.api.request.KeycloakUpdateUserRequest
 import kr.pincoin.api.external.auth.keycloak.api.response.*
+import kr.pincoin.api.external.auth.keycloak.properties.KeycloakProperties
 import org.springframework.stereotype.Service
 
 @Service
 class KeycloakUserService(
     private val keycloakApiClient: KeycloakApiClient,
     private val keycloakAdminService: KeycloakAdminService,
+    private val keycloakProperties: KeycloakProperties,
 ) {
     /**
      * 새 사용자를 생성합니다.
@@ -24,13 +26,13 @@ class KeycloakUserService(
         lastName: String,
         password: String? = null,
         enabled: Boolean = true,
-    ): UserResult = withContext(Dispatchers.IO) {
+    ): KeycloakResponse<KeycloakCreateUserData> = withContext(Dispatchers.IO) {
         try {
-            withTimeout(15000) { // 15초
+            withTimeout(keycloakProperties.timeout) {
                 // 1. Admin 토큰 획득
                 val adminToken = when (val adminResult = keycloakAdminService.getAdminToken()) {
-                    is KeycloakAdminService.AdminTokenResult.Success -> adminResult.accessToken
-                    is KeycloakAdminService.AdminTokenResult.Error -> return@withTimeout UserResult.Error(
+                    is KeycloakResponse.Success -> adminResult.data.accessToken
+                    is KeycloakResponse.Error -> return@withTimeout KeycloakResponse.Error(
                         adminResult.errorCode,
                         adminResult.errorMessage
                     )
@@ -50,51 +52,37 @@ class KeycloakUserService(
                     credentials = credentials
                 )
 
-                when (val response = keycloakApiClient.createUser(adminToken, request)) {
-                    is KeycloakCreateUserResponse -> UserResult.Success(response.userId)
-                    is KeycloakErrorResponse -> UserResult.Error(
-                        errorCode = response.error,
-                        errorMessage = response.errorMessage ?: response.errorDescription ?: "사용자 생성 실패"
-                    )
-                    else -> UserResult.Error("UNKNOWN", "알 수 없는 응답 형식")
-                }
+                keycloakApiClient.createUser(adminToken, request)
             }
         } catch (_: TimeoutCancellationException) {
-            UserResult.Error("TIMEOUT", "사용자 생성 요청 시간 초과")
+            handleTimeout("사용자 생성")
         } catch (e: Exception) {
-            UserResult.Error("SYSTEM_ERROR", e.message ?: "시스템 오류")
+            handleError(e, "사용자 생성")
         }
     }
 
     /**
      * 사용자 정보를 조회합니다.
      */
-    suspend fun getUser(userId: String): UserInfoResult = withContext(Dispatchers.IO) {
+    suspend fun getUser(userId: String): KeycloakResponse<KeycloakUserData> = withContext(Dispatchers.IO) {
         try {
-            withTimeout(10000) { // 10초
+            withTimeout(keycloakProperties.timeout) {
                 // 1. Admin 토큰 획득
                 val adminToken = when (val adminResult = keycloakAdminService.getAdminToken()) {
-                    is KeycloakAdminService.AdminTokenResult.Success -> adminResult.accessToken
-                    is KeycloakAdminService.AdminTokenResult.Error -> return@withTimeout UserInfoResult.Error(
+                    is KeycloakResponse.Success -> adminResult.data.accessToken
+                    is KeycloakResponse.Error -> return@withTimeout KeycloakResponse.Error(
                         adminResult.errorCode,
                         adminResult.errorMessage
                     )
                 }
 
                 // 2. 사용자 정보 조회
-                when (val response = keycloakApiClient.getUser(adminToken, userId)) {
-                    is KeycloakUserResponse -> UserInfoResult.Success(response)
-                    is KeycloakErrorResponse -> UserInfoResult.Error(
-                        errorCode = response.error,
-                        errorMessage = response.errorMessage ?: response.errorDescription ?: "사용자 정보 조회 실패"
-                    )
-                    else -> UserInfoResult.Error("UNKNOWN", "알 수 없는 응답 형식")
-                }
+                keycloakApiClient.getUser(adminToken, userId)
             }
         } catch (_: TimeoutCancellationException) {
-            UserInfoResult.Error("TIMEOUT", "사용자 정보 조회 요청 시간 초과")
+            handleTimeout("사용자 정보 조회")
         } catch (e: Exception) {
-            UserInfoResult.Error("SYSTEM_ERROR", e.message ?: "시스템 오류")
+            handleError(e, "사용자 정보 조회")
         }
     }
 
@@ -108,13 +96,13 @@ class KeycloakUserService(
         email: String? = null,
         enabled: Boolean? = null,
         emailVerified: Boolean? = null,
-    ): UserUpdateResult = withContext(Dispatchers.IO) {
+    ): KeycloakResponse<KeycloakUserData> = withContext(Dispatchers.IO) {
         try {
-            withTimeout(10000) { // 10초
+            withTimeout(keycloakProperties.timeout) {
                 // 1. Admin 토큰 획득
                 val adminToken = when (val adminResult = keycloakAdminService.getAdminToken()) {
-                    is KeycloakAdminService.AdminTokenResult.Success -> adminResult.accessToken
-                    is KeycloakAdminService.AdminTokenResult.Error -> return@withTimeout UserUpdateResult.Error(
+                    is KeycloakResponse.Success -> adminResult.data.accessToken
+                    is KeycloakResponse.Error -> return@withTimeout KeycloakResponse.Error(
                         adminResult.errorCode,
                         adminResult.errorMessage
                     )
@@ -129,61 +117,67 @@ class KeycloakUserService(
                     emailVerified = emailVerified
                 )
 
-                when (val response = keycloakApiClient.updateUser(adminToken, userId, request)) {
-                    is KeycloakUserResponse -> UserUpdateResult.Success
-                    is KeycloakErrorResponse -> UserUpdateResult.Error(
-                        errorCode = response.error,
-                        errorMessage = response.errorMessage ?: response.errorDescription ?: "사용자 정보 수정 실패"
-                    )
-                    else -> UserUpdateResult.Error("UNKNOWN", "알 수 없는 응답 형식")
-                }
+                keycloakApiClient.updateUser(adminToken, userId, request)
             }
         } catch (_: TimeoutCancellationException) {
-            UserUpdateResult.Error("TIMEOUT", "사용자 정보 수정 요청 시간 초과")
+            handleTimeout("사용자 정보 수정")
         } catch (e: Exception) {
-            UserUpdateResult.Error("SYSTEM_ERROR", e.message ?: "시스템 오류")
+            handleError(e, "사용자 정보 수정")
+        }
+    }
+
+    /**
+     * 사용자를 삭제합니다.
+     */
+    suspend fun deleteUser(userId: String): KeycloakResponse<KeycloakLogoutData> = withContext(Dispatchers.IO) {
+        try {
+            withTimeout(keycloakProperties.timeout) {
+                // 1. Admin 토큰 획득
+                val adminToken = when (val adminResult = keycloakAdminService.getAdminToken()) {
+                    is KeycloakResponse.Success -> adminResult.data.accessToken
+                    is KeycloakResponse.Error -> return@withTimeout KeycloakResponse.Error(
+                        adminResult.errorCode,
+                        adminResult.errorMessage
+                    )
+                }
+
+                // 2. 사용자 삭제
+                keycloakApiClient.deleteUser(adminToken, userId)
+            }
+        } catch (_: TimeoutCancellationException) {
+            handleTimeout("사용자 삭제")
+        } catch (e: Exception) {
+            handleError(e, "사용자 삭제")
         }
     }
 
     /**
      * Access Token으로 사용자 정보를 조회합니다.
      */
-    suspend fun getUserInfo(accessToken: String): UserInfoDetailResult = withContext(Dispatchers.IO) {
+    suspend fun getUserInfo(accessToken: String): KeycloakResponse<KeycloakUserInfoData> = withContext(Dispatchers.IO) {
         try {
-            withTimeout(10000) { // 10초
-                when (val response = keycloakApiClient.getUserInfo(accessToken)) {
-                    is KeycloakUserInfoResponse -> UserInfoDetailResult.Success(response)
-                    is KeycloakErrorResponse -> UserInfoDetailResult.Error(
-                        errorCode = response.error,
-                        errorMessage = response.errorDescription ?: "사용자 정보 조회 실패"
-                    )
-                    else -> UserInfoDetailResult.Error("UNKNOWN", "알 수 없는 응답 형식")
-                }
+            withTimeout(keycloakProperties.timeout) {
+                keycloakApiClient.getUserInfo(accessToken)
             }
         } catch (_: TimeoutCancellationException) {
-            UserInfoDetailResult.Error("TIMEOUT", "사용자 정보 조회 요청 시간 초과")
+            handleTimeout("사용자 정보 조회")
         } catch (e: Exception) {
-            UserInfoDetailResult.Error("SYSTEM_ERROR", e.message ?: "시스템 오류")
+            handleError(e, "사용자 정보 조회")
         }
     }
 
-    sealed class UserResult {
-        data class Success(val userId: String) : UserResult()
-        data class Error(val errorCode: String, val errorMessage: String) : UserResult()
+    // Transfer Services 패턴을 따른 공통 에러 처리 메서드들
+    private fun handleTimeout(operation: String): KeycloakResponse<Nothing> {
+        return KeycloakResponse.Error(
+            errorCode = "TIMEOUT",
+            errorMessage = "$operation 요청 시간 초과"
+        )
     }
 
-    sealed class UserInfoResult {
-        data class Success(val userResponse: KeycloakUserResponse) : UserInfoResult()
-        data class Error(val errorCode: String, val errorMessage: String) : UserInfoResult()
-    }
-
-    sealed class UserUpdateResult {
-        object Success : UserUpdateResult()
-        data class Error(val errorCode: String, val errorMessage: String) : UserUpdateResult()
-    }
-
-    sealed class UserInfoDetailResult {
-        data class Success(val userInfoResponse: KeycloakUserInfoResponse) : UserInfoDetailResult()
-        data class Error(val errorCode: String, val errorMessage: String) : UserInfoDetailResult()
+    private fun handleError(error: Throwable, operation: String): KeycloakResponse<Nothing> {
+        return KeycloakResponse.Error(
+            errorCode = "SYSTEM_ERROR",
+            errorMessage = "${operation} 중 오류 발생: ${error.message ?: "알 수 없는 오류"}"
+        )
     }
 }

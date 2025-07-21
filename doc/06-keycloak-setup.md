@@ -185,14 +185,11 @@ spring:
             user-name-attribute: preferred_username
 
 keycloak:
-  enabled: true # 점진적 마이그레이션을 위한 활성화 플래그
-  user-migration: # 기존 사용자 매핑 전략
-    auto-create: true # 자동 생성 여부
-  # Realm 및 클라이언트 설정
   realm: zerocan
   client-id: zerocan-backend
   client-secret: your-secret
   server-url: http://keycloak:8080
+  timeout: 5000
 ```
 
 ## external.auth.keycloak 주요 파일 추가

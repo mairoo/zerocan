@@ -14,7 +14,9 @@ data class KeycloakProperties(
 
     val clientSecret: String = "",
 
-    val serverUrl: String = "http://keycloak:8080"
+    val serverUrl: String = "http://keycloak:8080",
+
+    val timeout: Long = 10000,
 ) {
     data class UserMigration(
         val autoCreate: Boolean = false,

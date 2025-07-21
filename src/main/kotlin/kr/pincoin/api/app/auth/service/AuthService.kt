@@ -10,7 +10,8 @@ import kr.pincoin.api.app.auth.vo.TokenPair
 import kr.pincoin.api.domain.coordinator.user.UserResourceCoordinator
 import kr.pincoin.api.domain.user.error.UserErrorCode
 import kr.pincoin.api.domain.user.model.User
-import kr.pincoin.api.external.auth.keycloak.api.response.KeycloakTokenResponse
+import kr.pincoin.api.external.auth.keycloak.api.response.KeycloakResponse
+import kr.pincoin.api.external.auth.keycloak.api.response.KeycloakTokenData
 import kr.pincoin.api.external.auth.keycloak.service.KeycloakAdminService
 import kr.pincoin.api.external.auth.keycloak.service.KeycloakTokenService
 import kr.pincoin.api.global.constant.RedisKey
@@ -52,20 +53,20 @@ class AuthService(
                 )
 
                 when (tokenResult) {
-                    is KeycloakTokenService.TokenResult.Success -> {
-                        val tokenResponse = tokenResult.tokenResponse
+                    is KeycloakResponse.Success -> {
+                        val tokenData = tokenResult.data
 
                         // 2. Redis에 세션 메타데이터 저장 (토큰 자체는 저장하지 않음)
-                        storeSessionMetadata(tokenResponse, request.email, servletRequest)
+                        storeSessionMetadata(tokenData, request.email, servletRequest)
 
                         // 3. 응답 구성
                         val accessTokenResponse = AccessTokenResponse.of(
-                            accessToken = tokenResponse.accessToken,
-                            expiresIn = tokenResponse.expiresIn
+                            accessToken = tokenData.accessToken,
+                            expiresIn = tokenData.expiresIn
                         )
 
                         val refreshToken = if (request.rememberMe) {
-                            tokenResponse.refreshToken
+                            tokenData.refreshToken
                         } else {
                             null // rememberMe가 false면 리프레시 토큰 쿠키 설정 안함
                         }
@@ -79,7 +80,7 @@ class AuthService(
                         tokenPair
                     }
 
-                    is KeycloakTokenService.TokenResult.Error -> {
+                    is KeycloakResponse.Error -> {
                         logger.warn { "로그인 실패: email=${request.email}, error=${tokenResult.errorCode}" }
 
                         // Keycloak 에러를 비즈니스 예외로 변환
@@ -121,27 +122,27 @@ class AuthService(
                 val refreshResult = keycloakTokenService.refreshToken(refreshToken)
 
                 when (refreshResult) {
-                    is KeycloakTokenService.TokenResult.Success -> {
-                        val tokenResponse = refreshResult.tokenResponse
+                    is KeycloakResponse.Success -> {
+                        val tokenData = refreshResult.data
 
                         // 2. 기존 세션 메타데이터 업데이트
-                        updateSessionMetadata(refreshToken, tokenResponse, servletRequest)
+                        updateSessionMetadata(refreshToken, tokenData, servletRequest)
 
                         val accessTokenResponse = AccessTokenResponse.of(
-                            accessToken = tokenResponse.accessToken,
-                            expiresIn = tokenResponse.expiresIn
+                            accessToken = tokenData.accessToken,
+                            expiresIn = tokenData.expiresIn
                         )
 
                         val tokenPair = TokenPair(
                             accessToken = accessTokenResponse,
-                            refreshToken = tokenResponse.refreshToken
+                            refreshToken = tokenData.refreshToken
                         )
 
                         logger.info { "토큰 갱신 성공" }
                         tokenPair
                     }
 
-                    is KeycloakTokenService.TokenResult.Error -> {
+                    is KeycloakResponse.Error -> {
                         logger.warn { "토큰 갱신 실패: error=${refreshResult.errorCode}" }
 
                         // 갱신 실패시 세션 메타데이터 제거
@@ -178,7 +179,18 @@ class AuthService(
         runBlocking {
             try {
                 // 1. Keycloak에서 토큰 무효화
-                keycloakTokenService.logout(refreshToken)
+                val logoutResult = keycloakTokenService.logout(refreshToken)
+
+                when (logoutResult) {
+                    is KeycloakResponse.Success -> {
+                        logger.debug { "Keycloak 로그아웃 성공" }
+                    }
+
+                    is KeycloakResponse.Error -> {
+                        logger.warn { "Keycloak 로그아웃 실패: ${logoutResult.errorCode}" }
+                        // 로그아웃 실패해도 계속 진행
+                    }
+                }
 
                 // 2. Redis에서 세션 메타데이터 제거
                 removeSessionMetadata(refreshToken)
@@ -217,7 +229,16 @@ class AuthService(
 
                         if (!refreshToken.isNullOrBlank()) {
                             try {
-                                keycloakTokenService.logout(refreshToken)
+                                val logoutResult = keycloakTokenService.logout(refreshToken)
+                                when (logoutResult) {
+                                    is KeycloakResponse.Success -> {
+                                        logger.debug { "개별 세션 Keycloak 로그아웃 성공: sessionKey=$sessionKey" }
+                                    }
+
+                                    is KeycloakResponse.Error -> {
+                                        logger.warn { "개별 세션 Keycloak 로그아웃 실패: sessionKey=$sessionKey, error=${logoutResult.errorCode}" }
+                                    }
+                                }
                             } catch (e: Exception) {
                                 logger.warn { "개별 세션 Keycloak 로그아웃 실패: sessionKey=$sessionKey, error=${e.message}" }
                             }
@@ -271,11 +292,11 @@ class AuthService(
      * 토큰 자체는 저장하지 않고 JWT ID(jti)를 키로 사용하여 메타데이터만 저장
      */
     private fun storeSessionMetadata(
-        tokenResponse: KeycloakTokenResponse,
+        tokenData: KeycloakTokenData,
         email: String,
         request: HttpServletRequest,
     ) {
-        val refreshToken = tokenResponse.refreshToken ?: return
+        val refreshToken = tokenData.refreshToken ?: return
 
         try {
             // JWT의 jti(JWT ID) 추출
@@ -299,7 +320,7 @@ class AuthService(
             )
 
             // TTL 설정 (Keycloak의 refresh token 만료 시간과 동일)
-            redisTemplate.expire(sessionKey, tokenResponse.refreshExpiresIn, TimeUnit.SECONDS)
+            redisTemplate.expire(sessionKey, tokenData.refreshExpiresIn, TimeUnit.SECONDS)
 
             logger.debug { "세션 메타데이터 저장 완료: email=$email, jti=$jti" }
 
@@ -314,7 +335,7 @@ class AuthService(
      */
     private fun updateSessionMetadata(
         oldRefreshToken: String,
-        newTokenResponse: KeycloakTokenResponse,
+        newTokenData: KeycloakTokenData,
         request: HttpServletRequest
     ) {
         try {
@@ -325,7 +346,7 @@ class AuthService(
             val existingSession = redisTemplate.opsForHash<String, String>().entries(oldSessionKey)
 
             if (existingSession.isNotEmpty()) {
-                val newRefreshToken = newTokenResponse.refreshToken ?: return
+                val newRefreshToken = newTokenData.refreshToken ?: return
                 val newJti = jwtUtils.extractJti(newRefreshToken)
                 val newSessionKey = "${RedisKey.SESSION_PREFIX}$newJti"
 
@@ -348,7 +369,7 @@ class AuthService(
                 }
 
                 redisTemplate.opsForHash<String, String>().putAll(newSessionKey, updatedSession)
-                redisTemplate.expire(newSessionKey, newTokenResponse.refreshExpiresIn, TimeUnit.SECONDS)
+                redisTemplate.expire(newSessionKey, newTokenData.refreshExpiresIn, TimeUnit.SECONDS)
 
                 // 기존 세션 데이터 제거
                 redisTemplate.delete(oldSessionKey)
@@ -403,8 +424,8 @@ class AuthService(
             // 3. Keycloak에서 실제 토큰 유효성 검증 (갱신 시도)
             val refreshResult = keycloakTokenService.refreshToken(refreshToken)
             val isValidInKeycloak = when (refreshResult) {
-                is KeycloakTokenService.TokenResult.Success -> true
-                is KeycloakTokenService.TokenResult.Error -> {
+                is KeycloakResponse.Success -> true
+                is KeycloakResponse.Error -> {
                     logger.debug { "Keycloak 토큰 검증 실패: ${refreshResult.errorCode}" }
                     false
                 }
@@ -469,12 +490,12 @@ class AuthService(
      */
     private suspend fun getAdminToken(): String {
         return when (val result = keycloakAdminService.getAdminToken()) {
-            is KeycloakAdminService.AdminTokenResult.Success -> {
+            is KeycloakResponse.Success -> {
                 logger.debug { "Admin 토큰 획득 성공" }
-                result.accessToken
+                result.data.accessToken
             }
 
-            is KeycloakAdminService.AdminTokenResult.Error -> {
+            is KeycloakResponse.Error -> {
                 logger.error { "Admin 토큰 획득 실패: ${result.errorCode} - ${result.errorMessage}" }
                 throw BusinessException(UserErrorCode.ADMIN_TOKEN_FAILED)
             }

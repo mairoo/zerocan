@@ -71,4 +71,12 @@ enum class UserErrorCode(
         HttpStatus.INTERNAL_SERVER_ERROR,
         "전체 로그아웃 실패했습니다",
     ),
+    KEYCLOAK_TIMEOUT(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Keycloak 타임아웃",
+    ),
+    KEYCLOAK_SYSTEM_ERROR(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Keycloak 서버 오류",
+    ),
 }

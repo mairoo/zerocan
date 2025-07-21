@@ -10,10 +10,7 @@ import kr.pincoin.api.domain.user.model.User
 import kr.pincoin.api.domain.user.service.UserService
 import kr.pincoin.api.external.auth.keycloak.api.request.KeycloakCreateUserRequest
 import kr.pincoin.api.external.auth.keycloak.api.request.KeycloakLoginRequest
-import kr.pincoin.api.external.auth.keycloak.api.response.KeycloakCreateUserResponse
-import kr.pincoin.api.external.auth.keycloak.api.response.KeycloakDeleteUserResponse
-import kr.pincoin.api.external.auth.keycloak.api.response.KeycloakErrorResponse
-import kr.pincoin.api.external.auth.keycloak.api.response.KeycloakTokenResponse
+import kr.pincoin.api.external.auth.keycloak.api.response.*
 import kr.pincoin.api.external.auth.keycloak.properties.KeycloakProperties
 import kr.pincoin.api.external.auth.keycloak.service.KeycloakApiClient
 import kr.pincoin.api.global.exception.BusinessException
@@ -90,22 +87,26 @@ class UserResourceCoordinator(
         )
 
         return@withContext when (val response = keycloakApiClient.login(loginRequest)) {
-            is KeycloakTokenResponse -> {
+            is KeycloakResponse.Success -> {
                 logger.info { "사용자 인증 성공: email=$email" }
+                val tokenData = response.data
                 AccessTokenResponse.of(
-                    accessToken = response.accessToken,
-                    expiresIn = response.expiresIn
+                    accessToken = tokenData.accessToken,
+                    expiresIn = tokenData.expiresIn
                 )
             }
 
-            is KeycloakErrorResponse -> {
-                logger.error { "사용자 인증 실패: email=$email, error=${response.error}" }
-                throw BusinessException(UserErrorCode.AUTHENTICATION_FAILED)
-            }
+            is KeycloakResponse.Error -> {
+                logger.error { "사용자 인증 실패: email=$email, error=${response.errorCode}" }
 
-            else -> {
-                logger.error { "사용자 인증 응답 파싱 실패: email=$email" }
-                throw BusinessException(UserErrorCode.AUTHENTICATION_PARSING_ERROR)
+                val errorCode = when (response.errorCode) {
+                    "invalid_grant" -> UserErrorCode.INVALID_CREDENTIALS
+                    "invalid_client" -> UserErrorCode.INVALID_CREDENTIALS
+                    "TIMEOUT" -> UserErrorCode.LOGIN_TIMEOUT
+                    else -> UserErrorCode.AUTHENTICATION_FAILED
+                }
+
+                throw BusinessException(errorCode)
             }
         }
     }
@@ -136,19 +137,21 @@ class UserResourceCoordinator(
         )
 
         return when (val response = keycloakApiClient.createUser(adminToken, createUserRequest)) {
-            is KeycloakCreateUserResponse -> {
-                logger.info { "Keycloak 사용자 생성 성공: userId=${response.userId}, email=${request.email}" }
-                response.userId
+            is KeycloakResponse.Success -> {
+                logger.info { "Keycloak 사용자 생성 성공: userId=${response.data.userId}, email=${request.email}" }
+                response.data.userId
             }
 
-            is KeycloakErrorResponse -> {
-                logger.error { "Keycloak 사용자 생성 실패: email=${request.email}, error=${response.error}" }
-                throw BusinessException(UserErrorCode.USER_CREATE_FAILED)
-            }
+            is KeycloakResponse.Error -> {
+                logger.error { "Keycloak 사용자 생성 실패: email=${request.email}, error=${response.errorCode}" }
 
-            else -> {
-                logger.error { "Keycloak 사용자 생성 응답 파싱 실패: email=${request.email}" }
-                throw BusinessException(UserErrorCode.KEYCLOAK_PARSING_ERROR)
+                val errorCode = when (response.errorCode) {
+                    "TIMEOUT" -> UserErrorCode.KEYCLOAK_TIMEOUT
+                    "SYSTEM_ERROR" -> UserErrorCode.KEYCLOAK_SYSTEM_ERROR
+                    else -> UserErrorCode.USER_CREATE_FAILED
+                }
+
+                throw BusinessException(errorCode)
             }
         }
     }
@@ -166,21 +169,16 @@ class UserResourceCoordinator(
 
         try {
             when (val response = keycloakApiClient.deleteUser(adminToken, keycloakUserId)) {
-                is KeycloakDeleteUserResponse -> {
+                is KeycloakResponse.Success -> {
                     logger.info { "보상 트랜잭션 성공: Keycloak 사용자 삭제 완료 - userId=$keycloakUserId" }
                 }
 
-                is KeycloakErrorResponse -> {
+                is KeycloakResponse.Error -> {
                     logger.error {
-                        "보상 트랜잭션 실패: Keycloak 사용자 삭제 오류 - userId=$keycloakUserId, error=${response.error}"
+                        "보상 트랜잭션 실패: Keycloak 사용자 삭제 오류 - userId=$keycloakUserId, error=${response.errorCode}"
                     }
                     // 보상 트랜잭션 실패는 별도 알림/모니터링이 필요할 수 있음
-                    notifyCompensationFailure(keycloakUserId, email, response.error)
-                }
-
-                else -> {
-                    logger.error { "보상 트랜잭션 실패: 알 수 없는 응답 형식 - userId=$keycloakUserId" }
-                    notifyCompensationFailure(keycloakUserId, email, "UNKNOWN_RESPONSE")
+                    notifyCompensationFailure(keycloakUserId, email, response.errorCode)
                 }
             }
         } catch (e: Exception) {
