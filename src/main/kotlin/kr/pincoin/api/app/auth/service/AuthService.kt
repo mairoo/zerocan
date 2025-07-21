@@ -12,7 +12,6 @@ import kr.pincoin.api.domain.user.error.UserErrorCode
 import kr.pincoin.api.domain.user.model.User
 import kr.pincoin.api.external.auth.keycloak.api.response.KeycloakTokenResponse
 import kr.pincoin.api.external.auth.keycloak.service.KeycloakAdminService
-import kr.pincoin.api.external.auth.keycloak.service.KeycloakLoginService
 import kr.pincoin.api.external.auth.keycloak.service.KeycloakTokenService
 import kr.pincoin.api.global.constant.RedisKey
 import kr.pincoin.api.global.exception.BusinessException
@@ -26,7 +25,6 @@ import java.util.concurrent.TimeUnit
 class AuthService(
     private val userResourceCoordinator: UserResourceCoordinator,
     private val keycloakAdminService: KeycloakAdminService,
-    private val keycloakLoginService: KeycloakLoginService,
     private val keycloakTokenService: KeycloakTokenService,
     private val redisTemplate: RedisTemplate<String, String>,
     private val jwtUtils: JwtUtils,
@@ -48,14 +46,14 @@ class AuthService(
         return runBlocking {
             try {
                 // 1. Keycloak 로그인
-                val loginResult = keycloakLoginService.login(
+                val tokenResult = keycloakTokenService.login(
                     username = request.email,
                     password = request.password
                 )
 
-                when (loginResult) {
-                    is KeycloakLoginService.LoginResult.Success -> {
-                        val tokenResponse = loginResult.tokenResponse
+                when (tokenResult) {
+                    is KeycloakTokenService.TokenResult.Success -> {
+                        val tokenResponse = tokenResult.tokenResponse
 
                         // 2. Redis에 세션 메타데이터 저장 (토큰 자체는 저장하지 않음)
                         storeSessionMetadata(tokenResponse, request.email, servletRequest)
@@ -81,11 +79,11 @@ class AuthService(
                         tokenPair
                     }
 
-                    is KeycloakLoginService.LoginResult.Error -> {
-                        logger.warn { "로그인 실패: email=${request.email}, error=${loginResult.errorCode}" }
+                    is KeycloakTokenService.TokenResult.Error -> {
+                        logger.warn { "로그인 실패: email=${request.email}, error=${tokenResult.errorCode}" }
 
                         // Keycloak 에러를 비즈니스 예외로 변환
-                        val errorCode = when (loginResult.errorCode) {
+                        val errorCode = when (tokenResult.errorCode) {
                             "invalid_grant" -> UserErrorCode.INVALID_CREDENTIALS
                             "invalid_client" -> UserErrorCode.INVALID_CREDENTIALS
                             "TIMEOUT" -> UserErrorCode.LOGIN_TIMEOUT

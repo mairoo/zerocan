@@ -68,7 +68,7 @@ class AuthController(
     }
 
     /**
-     * 회원 가입을 합니다.
+     * 회원 가입
      */
     @PostMapping("/sign-up")
     fun signUp(
@@ -101,5 +101,14 @@ class AuthController(
                 .build()
 
             add(HttpHeaders.SET_COOKIE, cookie.toString())
+
+            // 인증 API 보안 헤더
+            add("X-Content-Type-Options", "nosniff") // MIME 스니핑 공격 방어
+            add("X-Frame-Options", "DENY") // 클릭재킹 공격 방어
+
+            // HTTPS 환경에서만 추가 보안 헤더 적용 (1년간 유효)
+            if (request.isSecure) {
+                add("Strict-Transport-Security", "max-age=31536000") // HTTPS 강제
+            }
         }
 }
