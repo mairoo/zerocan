@@ -3,6 +3,8 @@ services:
     container_name: ${PREFIX}-redis
     image: redis:alpine
     restart: unless-stopped
+    ports:
+      - "16379:6379"
     volumes:
       - redis-data:/data
     networks:
@@ -15,10 +17,34 @@ services:
         max-size: "20m"
         max-file: "10"
 
+  mariadb:
+    container_name: ${PREFIX}-mariadb
+    image: mariadb:lts
+    restart: unless-stopped
+    ports:
+      - "13306:3306"
+    volumes:
+      - mariadb-data:/var/lib/mysql
+    networks:
+      - app-network
+    environment:
+      - TZ=Asia/Seoul
+      - MYSQL_ROOT_PASSWORD=${MARIADB_ROOT_PASSWORD}
+      - MYSQL_DATABASE=zerocan
+      - MYSQL_USER=zerocan
+      - MYSQL_PASSWORD=${MARIADB_PASSWORD}
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "10"
+
   keycloak-postgres:
     container_name: ${PREFIX}-keycloak-postgres
     image: postgres:15-alpine
     restart: unless-stopped
+    ports:
+      - "15432:5432"
     volumes:
       - keycloak-postgres-data:/var/lib/postgresql/data
     networks:
@@ -27,7 +53,7 @@ services:
       - TZ=Asia/Seoul
       - POSTGRES_DB=keycloak
       - POSTGRES_USER=keycloak
-      - POSTGRES_PASSWORD=${KEYCLOAK_DB_PASSWORD:-keycloak123}
+      - POSTGRES_PASSWORD=${KEYCLOAK_DB_PASSWORD}
     logging:
       driver: "json-file"
       options:
@@ -46,8 +72,8 @@ services:
       - app-network
     environment:
       - TZ=Asia/Seoul
-      - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN:-admin}
-      - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD:-admin123}
+      - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN}
+      - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
       - KC_DB=postgres
       - KC_DB_URL=jdbc:postgresql://keycloak-postgres:5432/keycloak
       - KC_DB_USERNAME=keycloak
@@ -82,6 +108,7 @@ services:
       - "8080:8080"
     depends_on:
       - redis
+      - mariadb
       - keycloak
     networks:
       - app-network
@@ -109,6 +136,8 @@ networks:
 volumes:
   redis-data:
     name: ${PREFIX}-redis-data
+  mariadb-data:
+    name: ${PREFIX}-mariadb-data
   gradle-cache:
     name: ${PREFIX}-gradle-cache
   keycloak-postgres-data:

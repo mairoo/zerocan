@@ -88,10 +88,6 @@ keycloak 설정
 스프링부트 설정: `application-local.yml`
 
 ```
->     url: jdbc:mariadb://192.168.0.1:3306/database
->     username: username
->     password: password
-
 >             client-secret: your-client-secret
 
 >   client-secret: your-client-secret

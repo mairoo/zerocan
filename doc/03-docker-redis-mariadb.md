@@ -12,12 +12,15 @@
 ~/Projects/zerocan/backend/docker-compose.yml
 ```
 
-# Redis 컨테이너 실행
+# Redis / MariaDB 컨테이너 실행
 
 ## `.env`
 
 ```properties
 PREFIX=zerocan
+
+MARIADB_ROOT_PASSWORD=secure_root_password_123
+MARIADB_PASSWORD=secure_zerocan_password_123
 ```
 
 ## `docker-compose.yml`
@@ -28,12 +31,36 @@ services:
     container_name: ${PREFIX}-redis
     image: redis:alpine
     restart: unless-stopped
+    ports:
+      - "16379:6379"
     volumes:
       - redis-data:/data
     networks:
       - app-network
     environment:
       - TZ=Asia/Seoul
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "10"
+
+  mariadb:
+    container_name: ${PREFIX}-mariadb
+    image: mariadb:lts
+    restart: unless-stopped
+    ports:
+      - "13306:3306"
+    volumes:
+      - mariadb-data:/var/lib/mysql
+    networks:
+      - app-network
+    environment:
+      - TZ=Asia/Seoul
+      - MYSQL_ROOT_PASSWORD=${MARIADB_ROOT_PASSWORD}
+      - MYSQL_DATABASE=zerocan
+      - MYSQL_USER=zerocan
+      - MYSQL_PASSWORD=${MARIADB_PASSWORD}
     logging:
       driver: "json-file"
       options:
@@ -48,6 +75,8 @@ networks:
 volumes:
   redis-data:
     name: ${PREFIX}-redis-data
+  mariadb-data:
+    name: ${PREFIX}-mariadb-data
 ```
 
 ## redis 도커 실행
@@ -104,6 +133,7 @@ services:
       - "8080:8080"
     depends_on:
       - redis
+      - mariadb
     networks:
       - app-network
     environment:
