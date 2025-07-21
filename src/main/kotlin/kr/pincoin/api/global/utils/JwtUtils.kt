@@ -131,23 +131,6 @@ class JwtUtils(
     }
 
     /**
-     * JWT 토큰에서 모든 클레임을 추출합니다.
-     *
-     * @param token JWT 토큰
-     * @return 모든 클레임이 포함된 Map
-     */
-    fun extractAllClaims(token: String): Map<String, Any> {
-        try {
-            val payload = extractPayload(token)
-            return objectMapper.convertValue(payload, Map::class.java) as Map<String, Any>
-
-        } catch (e: Exception) {
-            logger.error { "JWT 클레임 추출 실패: token=${token.take(20)}..., error=${e.message}" }
-            throw IllegalArgumentException("JWT 클레임 추출 실패: ${e.message}", e)
-        }
-    }
-
-    /**
      * JWT 토큰에서 특정 클레임을 추출합니다.
      *
      * @param token JWT 토큰
