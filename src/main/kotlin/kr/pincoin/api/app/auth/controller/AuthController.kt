@@ -7,8 +7,8 @@ import kr.pincoin.api.app.auth.request.SignUpRequest
 import kr.pincoin.api.app.auth.response.AccessTokenResponse
 import kr.pincoin.api.app.auth.service.AuthService
 import kr.pincoin.api.app.user.common.response.UserResponse
+import kr.pincoin.api.external.auth.keycloak.properties.KeycloakProperties
 import kr.pincoin.api.global.constant.CookieKey
-import kr.pincoin.api.global.properties.JwtProperties
 import kr.pincoin.api.global.response.success.ApiResponse
 import kr.pincoin.api.global.utils.DomainUtils
 import org.springframework.http.HttpHeaders
@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*
 @RestController
 @RequestMapping("/auth")
 class AuthController(
-    private val jwtProperties: JwtProperties,
+    private val keycloakProperties: KeycloakProperties,
     private val authService: AuthService,
 ) {
     /**
@@ -89,13 +89,13 @@ class AuthController(
         HttpHeaders().apply {
             val cookieValue = refreshToken?.takeIf { it.isNotEmpty() }
             val requestDomain = DomainUtils.getRequestDomain(request)
-            val cookieDomain = jwtProperties.findCookieDomain(requestDomain)
+            val cookieDomain = keycloakProperties.findCookieDomain(requestDomain)
 
             val cookie = ResponseCookie.from(CookieKey.REFRESH_TOKEN_NAME, cookieValue ?: "")
                 .httpOnly(true)
                 .secure(!requestDomain.contains("localhost"))
                 .path(CookieKey.PATH)
-                .maxAge(cookieValue?.let { jwtProperties.refreshTokenExpiresIn } ?: 0)
+                .maxAge(cookieValue?.let { keycloakProperties.refreshTokenExpiresIn } ?: 0)
                 .sameSite(CookieKey.SAME_SITE)
                 .domain(cookieDomain)
                 .build()
