@@ -33,7 +33,14 @@ class AuthController(
         val tokenPair = authService.login(request, servletRequest)
 
         return ResponseEntity.ok()
-            .headers(createRefreshTokenCookie(tokenPair.refreshToken, servletRequest))
+            .headers(
+                createRefreshTokenCookie(
+                    refreshToken = tokenPair.refreshToken,
+                    request = servletRequest,
+                    rememberMe = tokenPair.rememberMe,
+                    refreshExpiresIn = tokenPair.refreshExpiresIn,
+                )
+            )
             .body(ApiResponse.of(tokenPair.accessToken))
     }
 
@@ -48,7 +55,14 @@ class AuthController(
         val tokenPair = authService.refreshToken(refreshToken, servletRequest)
 
         return ResponseEntity.ok()
-            .headers(createRefreshTokenCookie(tokenPair.refreshToken, servletRequest))
+            .headers(
+                createRefreshTokenCookie(
+                    refreshToken = tokenPair.refreshToken,
+                    request = servletRequest,
+                    rememberMe = tokenPair.rememberMe,
+                    refreshExpiresIn = tokenPair.refreshExpiresIn,
+                )
+            )
             .body(ApiResponse.of(tokenPair.accessToken))
     }
 
@@ -63,7 +77,14 @@ class AuthController(
         refreshToken?.let { authService.logout(it) }
 
         return ResponseEntity.ok()
-            .headers(createRefreshTokenCookie(null, servletRequest)) // 쿠키 삭제 효과
+            .headers(
+                createRefreshTokenCookie(
+                    refreshToken = null,
+                    request = servletRequest,
+                    rememberMe = false,
+                    refreshExpiresIn = null,
+                )
+            )
             .body(ApiResponse.of(Unit))
     }
 
@@ -85,6 +106,8 @@ class AuthController(
     private fun createRefreshTokenCookie(
         refreshToken: String?,
         request: HttpServletRequest,
+        rememberMe: Boolean = false,
+        refreshExpiresIn: Long? = null,
     ): HttpHeaders =
         HttpHeaders().apply {
             val cookieValue = refreshToken?.takeIf { it.isNotEmpty() }
@@ -95,7 +118,14 @@ class AuthController(
                 .httpOnly(true)
                 .secure(!requestDomain.contains("localhost"))
                 .path(CookieKey.PATH)
-                .maxAge(cookieValue?.let { keycloakProperties.refreshTokenExpiresIn } ?: 0)
+                .maxAge(
+                    when { // rememberMe와 실제 토큰 만료시간에 따른 쿠키 만료시간 설정
+                        cookieValue == null -> 0 // 쿠키 삭제
+                        rememberMe -> refreshExpiresIn
+                            ?: keycloakProperties.refreshTokenExpiresIn // 실제 토큰 만료시간 우선, fallback으로 설정값
+                        else -> -1 // rememberMe=false: 세션 쿠키 (브라우저 종료시 삭제)
+                    }
+                )
                 .sameSite(CookieKey.SAME_SITE)
                 .domain(cookieDomain)
                 .build()

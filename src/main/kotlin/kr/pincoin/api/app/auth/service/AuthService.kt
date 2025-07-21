@@ -73,7 +73,9 @@ class AuthService(
 
                         val tokenPair = TokenPair(
                             accessToken = accessTokenResponse,
-                            refreshToken = refreshToken
+                            refreshToken = refreshToken,
+                            rememberMe = request.rememberMe,
+                            refreshExpiresIn = if (request.rememberMe) tokenData.refreshExpiresIn else null
                         )
 
                         logger.info { "로그인 성공: email=${request.email}" }
@@ -135,7 +137,9 @@ class AuthService(
 
                         val tokenPair = TokenPair(
                             accessToken = accessTokenResponse,
-                            refreshToken = tokenData.refreshToken
+                            refreshToken = tokenData.refreshToken,
+                            rememberMe = true, // refresh 요청은 무조건 rememberMe = true
+                            refreshExpiresIn = tokenData.refreshExpiresIn
                         )
 
                         logger.info { "토큰 갱신 성공" }
