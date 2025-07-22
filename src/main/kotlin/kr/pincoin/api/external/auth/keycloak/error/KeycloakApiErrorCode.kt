@@ -21,12 +21,12 @@ enum class KeycloakApiErrorCode(
 
     // 네트워크 관련 에러
     TIMEOUT(408, "TIMEOUT", "요청 시간이 초과되었습니다"),
-    CONNECTION_ERROR(0, "CONNECTION_ERROR", "네트워크 연결 오류가 발생했습니다"),
-    DNS_ERROR(0, "DNS_ERROR", "DNS 조회 실패"),
+    CONNECTION_ERROR(503, "CONNECTION_ERROR", "네트워크 연결 오류가 발생했습니다"),
+    DNS_ERROR(502, "DNS_ERROR", "DNS 조회 실패"),
 
     // 파싱 관련 에러
-    JSON_PARSING_ERROR(0, "JSON_PARSING_ERROR", "JSON 파싱 오류가 발생했습니다"),
-    RESPONSE_PARSING_ERROR(0, "RESPONSE_PARSING_ERROR", "응답 파싱 오류가 발생했습니다"),
+    JSON_PARSING_ERROR(500, "JSON_PARSING_ERROR", "JSON 파싱 오류가 발생했습니다"),
+    RESPONSE_PARSING_ERROR(500, "RESPONSE_PARSING_ERROR", "응답 파싱 오류가 발생했습니다"),
 
     // Keycloak 특화 에러
     INVALID_GRANT(400, "INVALID_GRANT", "유효하지 않은 grant입니다"),
