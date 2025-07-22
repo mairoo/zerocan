@@ -25,6 +25,7 @@ object Versions {
     const val KOTLIN_LOGGING_VERSION = "7.0.3"
     const val QUERYDSL_VERSION = "5.1.0"
     const val NETTY_VERSION = "4.1.116.Final"
+    const val AWS_SDK_VERSION = "2.32.5"
 }
 
 // OS 및 아키텍처 관련 상수
@@ -83,6 +84,15 @@ dependencies {
     // grafana
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("io.micrometer:micrometer-registry-prometheus")
+
+    // AWS SDK BOM
+    implementation(platform("software.amazon.awssdk:bom:${Versions.AWS_SDK_VERSION}"))
+
+    // AWS S3 관련 의존성 (버전 명시 불필요, BOM에서 관리)
+    implementation("software.amazon.awssdk:s3")
+    implementation("software.amazon.awssdk:auth")
+    implementation("software.amazon.awssdk:regions")
+    implementation("software.amazon.awssdk:apache-client")
 
     // Netty DNS resolver for Mac
     Platform.nettyClassifier?.let {

@@ -248,3 +248,51 @@ sudo nginx -t
 # 적용
 sudo systemctl reload nginx
 ```
+
+# 최종 운영환경 아키텍처 검토
+
+## 현재 구성 분석
+
+### 🔍 발견된 이슈들
+
+1. **nginx 중복**: 호스트 nginx와 Docker nginx가 동시 존재
+2. **도메인 오타**: `keyclaok.example.com` → `keycloak.example.com`
+3. **포트 충돌 가능성**: 호스트 nginx와 Docker nginx 모두 443 포트 사용
+
+## 호스트 nginx 리버스 프록시 아키텍처
+
+```
+인터넷
+    ↓
+호스트 nginx (443)
+    ├── api.example.com → localhost:8800 (Docker nginx-api)
+    ├── www.example.com → localhost:8300 (Docker nginx-web)  
+    ├── keycloak.example.com → localhost:8801 (Docker keycloak)
+    └── grafana.example.com → localhost:9300 (Docker grafana)
+```
+
+#### 호스트 레벨
+
+| 서비스   | 도메인                  | 포트  | 프록시 대상           |
+|-------|----------------------|-----|------------------|
+| nginx | api.example.com      | 443 | → localhost:8800 |
+| nginx | www.example.com      | 443 | → localhost:8300 |
+| nginx | keycloak.example.com | 443 | → localhost:8801 |
+| nginx | grafana.example.com  | 443 | → localhost:9300 |
+
+#### Docker 레벨
+
+| 서비스               | 외부포트  | 내부포트 | 역할        |
+|-------------------|-------|------|-----------|
+| redis             | -     | 6379 | 내부전용      |
+| mariadb           | 13306 | 3306 | 관리용       |
+| keycloak-postgres | 15432 | 5432 | 관리용       |
+| keycloak          | 8801  | 8080 | 인증서버      |
+| nginx-api         | 8800  | 80   | API 로드밸런서 |
+| backend-1         | -     | 8080 | 내부전용      |
+| backend-2         | -     | 8080 | 내부전용      |
+| prometheus        | -     | 9090 | 내부전용      |
+| grafana           | 9300  | 3000 | 모니터링      |
+| nginx-web         | 8300  | 80   | 웹 로드밸런서   |
+| frontend-1        | -     | 3000 | 내부전용      |
+| frontend-2        | -     | 3000 | 내부전용      |
