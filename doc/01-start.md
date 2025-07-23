@@ -20,6 +20,10 @@
 - [.gitignore](/.gitignore)
 - [.dockerignore](/.dockerignore)
 
+## IntelliJ 프로젝트 이름 변경
+
+- File → Project Structure > Project Settings > Project > Name (기본값: 패키지 이름의 마지막 폴더 이름)
+
 ## git 저장소 연결
 
 ```

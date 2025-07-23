@@ -92,7 +92,7 @@ dependencies {
     implementation("software.amazon.awssdk:s3")
     implementation("software.amazon.awssdk:auth")
     implementation("software.amazon.awssdk:regions")
-    implementation("software.amazon.awssdk:apache-client")
+    implementation("software.amazon.awssdk:netty-nio-client")
 
     // Netty DNS resolver for Mac
     Platform.nettyClassifier?.let {
