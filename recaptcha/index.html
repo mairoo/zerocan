@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>reCAPTCHA 테스트 메인</title>
+</head>
+<body>
+<h1>reCAPTCHA 테스트 페이지</h1>
+
+<h2>테스트 페이지 목록</h2>
+<ul>
+    <li><a href="recaptcha-v2-test.html">reCAPTCHA v2 테스트</a></li>
+    <li><a href="recaptcha-v3-test.html">reCAPTCHA v3 테스트</a></li>
+    <li><a href="recaptcha-status-test.html">서버 상태 확인</a></li>
+</ul>
+
+<h2>사용 방법</h2>
+<ol>
+    <li><strong>Google reCAPTCHA 콘솔</strong>에서 Site Key와 Secret Key를 발급받으세요</li>
+    <li><strong>도메인 설정</strong>에 <code>localhost:3000</code>을 추가하세요</li>
+    <li><strong>Spring Boot 서버</strong>를 8080 포트에서 실행하세요</li>
+    <li>각 테스트 페이지에서 Site Key를 입력하고 테스트하세요</li>
+</ol>
+
+<h2>설정 정보</h2>
+<ul>
+    <li><strong>웹 서버:</strong> http://localhost:3000 (Python 서버)</li>
+    <li><strong>API 서버:</strong> http://localhost:8080 (Spring Boot)</li>
+    <li><strong>API 엔드포인트:</strong>
+        <ul>
+            <li>GET /open/recaptcha/status</li>
+            <li>POST /open/recaptcha/v2/verify</li>
+            <li>POST /open/recaptcha/v3/verify</li>
+        </ul>
+    </li>
+</ul>
+
+<h2>문제 해결</h2>
+<ul>
+    <li><strong>CORS 오류:</strong> Spring Boot에서 CORS 설정 확인</li>
+    <li><strong>연결 오류:</strong> API 서버가 8080 포트에서 실행 중인지 확인</li>
+    <li><strong>reCAPTCHA 로드 실패:</strong> Site Key가 올바른지 확인</li>
+    <li><strong>도메인 오류:</strong> Google reCAPTCHA 콘솔에서 localhost:3000 도메인 등록 확인</li>
+</ul>
+</body>
+</html>

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>reCAPTCHA 서버 상태 확인</title>
+</head>
+<body>
+<h1>reCAPTCHA 서버 상태 확인</h1>
+
+<h2>설정</h2>
+<div>
+  <label>API 서버 URL:</label><br>
+  <input type="text" id="apiUrl" value="http://localhost:8080" style="width: 300px;"><br><br>
+
+  <button onclick="checkStatus()">서버 상태 확인</button>
+</div>
+
+<hr>
+
+<h2>서버 응답</h2>
+<pre id="result" style="background: #f0f0f0; padding: 10px; border: 1px solid #ccc;">서버 상태를 확인하려면 위 버튼을 클릭하세요.</pre>
+
+<hr>
+
+<div>
+  <a href="recaptcha-v2-test.html">v2 테스트 페이지로 이동</a> |
+  <a href="recaptcha-v3-test.html">v3 테스트 페이지로 이동</a>
+</div>
+
+<script>
+  async function checkStatus() {
+    const apiUrl = document.getElementById('apiUrl').value;
+
+    try {
+      document.getElementById('result').textContent = '서버 상태 확인 중...';
+
+      const result = await fetch(`${apiUrl}/open/recaptcha/status`);
+      const data = await result.json();
+
+      if (result.ok) {
+        document.getElementById('result').textContent =
+                `✅ 서버 상태 정상\n` +
+                `HTTP Status: ${result.status}\n` +
+                `Response:\n${JSON.stringify(data, null, 2)}`;
+      } else {
+        document.getElementById('result').textContent =
+                `❌ 서버 오류\n` +
+                `HTTP Status: ${result.status}\n` +
+                `Response:\n${JSON.stringify(data, null, 2)}`;
+      }
+    } catch (error) {
+      document.getElementById('result').textContent =
+              `🚨 연결 오류\n` +
+              `Error: ${error.message}\n` +
+              `확인사항:\n` +
+              `1. API 서버가 실행 중인지 확인\n` +
+              `2. CORS 설정이 올바른지 확인\n` +
+              `3. 네트워크 연결 상태 확인`;
+    }
+  }
+
+  // 페이지 로드 시 자동으로 상태 확인
+  window.onload = function() {
+    setTimeout(checkStatus, 500);
+  };
+</script>
+</body>
+</html>

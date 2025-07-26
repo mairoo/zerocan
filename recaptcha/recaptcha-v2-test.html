@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>reCAPTCHA v2 테스트</title>
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+</head>
+<body>
+<h1>reCAPTCHA v2 테스트</h1>
+
+<h2>설정</h2>
+<div>
+    <label>API 서버 URL:</label><br>
+    <input type="text" id="apiUrl" value="http://localhost:8080" style="width: 300px;"><br><br>
+
+    <label>reCAPTCHA Site Key:</label><br>
+    <input type="text" id="siteKey" placeholder="Site Key를 입력하세요" style="width: 500px;"><br><br>
+
+    <button onclick="applySiteKey()">Site Key 적용</button>
+</div>
+
+<hr>
+
+<h2>reCAPTCHA v2 검증</h2>
+<div id="recaptcha-container"></div>
+<br>
+<button onclick="testV2()" id="testBtn" disabled>v2 검증 테스트</button>
+<button onclick="resetRecaptcha()">리셋</button>
+
+<h3>결과:</h3>
+<pre id="result" style="background: #f0f0f0; padding: 10px; border: 1px solid #ccc;">Site Key를 입력하고 적용 버튼을 클릭하세요.</pre>
+
+<hr>
+
+<div>
+    <a href="recaptcha-v3-test.html">v3 테스트 페이지로 이동</a> |
+    <a href="recaptcha-status-test.html">서버 상태 확인 페이지</a> |
+    <a href="index.html">메인 페이지</a>
+</div>
+
+<script>
+    let siteKey = '';
+    let widgetId = null;
+
+    function applySiteKey() {
+        siteKey = document.getElementById('siteKey').value.trim();
+        if (!siteKey) {
+            alert('Site Key를 입력해주세요.');
+            return;
+        }
+
+        document.getElementById('result').textContent = 'reCAPTCHA v2 위젯 로드 중...';
+        renderRecaptcha();
+    }
+
+    function renderRecaptcha() {
+        if (!siteKey) {
+            document.getElementById('result').textContent = '❌ Site Key가 설정되지 않았습니다.';
+            return;
+        }
+
+        // 기존 위젯 제거
+        const container = document.getElementById('recaptcha-container');
+        container.innerHTML = '';
+
+        // reCAPTCHA API 로드 확인
+        if (typeof grecaptcha === 'undefined') {
+            document.getElementById('result').textContent = '❌ reCAPTCHA API가 로드되지 않았습니다. 페이지를 새로고침해주세요.';
+            return;
+        }
+
+        try {
+            // v2 위젯 렌더링
+            widgetId = grecaptcha.render('recaptcha-container', {
+                'sitekey': siteKey,
+                'callback': onRecaptchaSuccess,
+                'expired-callback': onRecaptchaExpired,
+                'error-callback': onRecaptchaError
+            });
+
+            document.getElementById('result').textContent = '✅ reCAPTCHA v2 위젯이 로드되었습니다. 체크박스를 완료하세요.';
+
+        } catch (error) {
+            document.getElementById('result').textContent = `❌ reCAPTCHA 위젯 로드 실패: ${error.message}`;
+        }
+    }
+
+    function onRecaptchaSuccess(token) {
+        console.log('reCAPTCHA 완료:', token);
+        document.getElementById('testBtn').disabled = false;
+        document.getElementById('result').textContent = '✅ reCAPTCHA 완료! 이제 검증 테스트를 실행할 수 있습니다.';
+    }
+
+    function onRecaptchaExpired() {
+        console.log('reCAPTCHA 만료');
+        document.getElementById('testBtn').disabled = true;
+        document.getElementById('result').textContent = '⏰ reCAPTCHA가 만료되었습니다. 다시 완료해주세요.';
+    }
+
+    function onRecaptchaError(error) {
+        console.log('reCAPTCHA 오류:', error);
+        document.getElementById('result').textContent = `❌ reCAPTCHA 오류가 발생했습니다: ${error}`;
+    }
+
+    async function testV2() {
+        if (!siteKey || widgetId === null) {
+            alert('먼저 Site Key를 적용하고 reCAPTCHA를 완료해주세요.');
+            return;
+        }
+
+        const token = grecaptcha.getResponse(widgetId);
+        if (!token) {
+            alert('reCAPTCHA를 먼저 완료해주세요.');
+            return;
+        }
+
+        try {
+            document.getElementById('result').textContent = 'API 서버로 검증 요청 중...';
+
+            const apiUrl = document.getElementById('apiUrl').value;
+            const response = await fetch(`${apiUrl}/open/recaptcha/v2/verify`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    token: token
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                document.getElementById('result').textContent = `✅ 검증 성공!\n${JSON.stringify(data, null, 2)}`;
+            } else {
+                document.getElementById('result').textContent = `❌ 검증 실패!\nHTTP ${response.status}\n${JSON.stringify(data, null, 2)}`;
+            }
+        } catch (error) {
+            document.getElementById('result').textContent = `🚨 네트워크 오류: ${error.message}`;
+        }
+    }
+
+    function resetRecaptcha() {
+        if (widgetId !== null) {
+            grecaptcha.reset(widgetId);
+            document.getElementById('testBtn').disabled = true;
+            document.getElementById('result').textContent = '🔄 reCAPTCHA가 리셋되었습니다. 다시 완료해주세요.';
+        }
+    }
+
+    // 페이지 로드 시 기본 설정
+    window.onload = function() {
+        // Google 공식 테스트 키 설정
+        document.getElementById('siteKey').value = '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI';
+
+        // reCAPTCHA API 로드 대기
+        const checkInterval = setInterval(() => {
+            if (typeof grecaptcha !== 'undefined') {
+                clearInterval(checkInterval);
+                console.log('reCAPTCHA API 로드 완료');
+                document.getElementById('result').textContent = '📝 위의 테스트 Site Key로 "Site Key 적용" 버튼을 클릭하세요.';
+            }
+        }, 100);
+    };
+</script>
+</body>
+</html>

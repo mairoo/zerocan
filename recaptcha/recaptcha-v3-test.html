@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>reCAPTCHA v3 테스트</title>
+    <!-- reCAPTCHA v3는 사이트키를 URL에 직접 포함해야 함 -->
+    <script id="recaptcha-script"></script>
+</head>
+<body>
+<h1>reCAPTCHA v3 테스트</h1>
+
+<h2>설정</h2>
+<div>
+    <label>API 서버 URL:</label><br>
+    <input type="text" id="apiUrl" value="http://localhost:8080" style="width: 300px;"><br><br>
+
+    <label>reCAPTCHA Site Key:</label><br>
+    <input type="text" id="siteKey" placeholder="Site Key를 입력하세요" style="width: 500px;"><br><br>
+
+    <button onclick="updateSiteKey()">Site Key 적용</button>
+</div>
+
+<hr>
+
+<h2>reCAPTCHA v3 검증</h2>
+<div>
+    <label>최소 점수 (0.0 ~ 1.0):</label><br>
+    <input type="number" id="minScore" min="0" max="1" step="0.1" value="0.5"><br><br>
+
+    <label>Action:</label><br>
+    <input type="text" id="action" value="test" placeholder="예: login, register, test"><br><br>
+
+    <button onclick="testV3()" id="testV3Btn">v3 검증 테스트</button>
+</div>
+
+<h3>결과:</h3>
+<pre id="result" style="background: #f0f0f0; padding: 10px; border: 1px solid #ccc;"></pre>
+
+<hr>
+
+<div>
+    <a href="recaptcha-v2-test.html">v2 테스트 페이지로 이동</a> |
+    <a href="recaptcha-status-test.html">서버 상태 확인 페이지</a>
+</div>
+
+<script>
+    let siteKey = '';
+    let recaptchaReady = false;
+
+    function updateSiteKey() {
+        siteKey = document.getElementById('siteKey').value.trim();
+        if (!siteKey) {
+            alert('Site Key를 입력해주세요.');
+            return;
+        }
+
+        // 기존 스크립트 제거
+        const existingScript = document.getElementById('recaptcha-script');
+        if (existingScript && existingScript.src) {
+            existingScript.remove();
+        }
+
+        // v3용 스크립트 동적 로드
+        const script = document.createElement('script');
+        script.id = 'recaptcha-script';
+        script.src = `https://www.google.com/recaptcha/api.js?render=${siteKey}`;
+        script.async = true;
+        script.defer = true;
+
+        script.onload = function() {
+            console.log('reCAPTCHA v3 스크립트 로드 완료');
+            initRecaptchaV3();
+        };
+
+        script.onerror = function() {
+            document.getElementById('result').textContent = '❌ reCAPTCHA 스크립트 로드 실패. Site Key를 확인해주세요.';
+        };
+
+        document.head.appendChild(script);
+        document.getElementById('result').textContent = 'reCAPTCHA v3 스크립트 로드 중...';
+    }
+
+    function initRecaptchaV3() {
+        if (!siteKey) {
+            return;
+        }
+
+        if (typeof grecaptcha !== 'undefined') {
+            grecaptcha.ready(function() {
+                console.log('reCAPTCHA v3 준비 완료');
+                recaptchaReady = true;
+                document.getElementById('testV3Btn').disabled = false;
+                document.getElementById('result').textContent = `✅ reCAPTCHA v3 준비 완료\nSite Key: ${siteKey}`;
+            });
+        }
+    }
+
+    async function testV3() {
+        if (!siteKey) {
+            alert('먼저 Site Key를 설정해주세요.');
+            return;
+        }
+
+        if (!recaptchaReady) {
+            alert('reCAPTCHA가 아직 준비되지 않았습니다. 잠시 후 다시 시도해주세요.');
+            return;
+        }
+
+        const action = document.getElementById('action').value || 'test';
+
+        try {
+            document.getElementById('result').textContent = 'reCAPTCHA v3 토큰 생성 중...';
+
+            const token = await grecaptcha.execute(siteKey, { action: action });
+
+            document.getElementById('result').textContent = 'API 서버로 검증 요청 중...';
+
+            const minScore = parseFloat(document.getElementById('minScore').value);
+            const apiUrl = document.getElementById('apiUrl').value;
+
+            const result = await fetch(`${apiUrl}/open/recaptcha/v3/verify`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    token: token,
+                    minScore: minScore
+                })
+            });
+
+            const data = await result.json();
+
+            if (result.ok) {
+                document.getElementById('result').textContent = `✅ 성공!\n${JSON.stringify(data, null, 2)}`;
+            } else {
+                document.getElementById('result').textContent = `❌ 실패!\n${JSON.stringify(data, null, 2)}`;
+            }
+        } catch (error) {
+            document.getElementById('result').textContent = `🚨 오류: ${error.message}`;
+        }
+    }
+
+    // 페이지 로드 시 기본 설정
+    window.onload = function() {
+        // 테스트 키를 기본값으로 설정
+        document.getElementById('siteKey').value = '6LfKURIUAAAAAO50vlwOf5gjTTiByOm_yhKpd3bh';
+        document.getElementById('result').textContent = '위의 Site Key를 적용하려면 "Site Key 적용" 버튼을 클릭하세요.';
+    };
+</script>
+
+<!-- v3는 더미 컨테이너가 필요 없음 -->
+</body>
+</html>
