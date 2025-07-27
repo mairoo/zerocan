@@ -66,10 +66,17 @@ class KeycloakJwtAuthenticationConverter(
             )
 
             if (user != null) {
+                // 단일 역할
+                /**
+                 * val role = if (user.isSuperuser) "ROLE_ADMIN" else "ROLE_USER"
+                 * val authority = SimpleGrantedAuthority(role)
+                 * listOf(authority)
+                 */
+
+                // 다중 역할
                 val authorities = user.roles.map { role ->
                     SimpleGrantedAuthority(role.name)
                 }
-                logger.debug { "사용자 권한 조회 완료: email=$email, roles=${user.roles.map { it.name }}" }
                 authorities
             } else {
                 logger.warn { "사용자를 찾을 수 없음: email=$email" }

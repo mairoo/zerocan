@@ -5,6 +5,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import kr.pincoin.api.app.s3.admin.response.HealthCheckResponse
 import kr.pincoin.api.external.s3.error.S3ErrorCode
 import kr.pincoin.api.external.s3.properties.S3Properties
 import kr.pincoin.api.global.exception.BusinessException
@@ -28,7 +29,7 @@ class S3HealthCheckService(
      * 간단한 연결 테스트 (빠른 확인용)
      * 기본 속성 검증 + 버킷 접근 테스트
      */
-    suspend fun quickHealthCheck(): Unit =
+    suspend fun quickHealthCheck(): HealthCheckResponse =
         withContext(Dispatchers.IO) {
             try {
                 // 기본 속성 검증 (빠른 체크)
@@ -41,6 +42,8 @@ class S3HealthCheckService(
 
                     s3Client.headBucket(headBucketRequest)
                 }
+
+                HealthCheckResponse.of()
             } catch (_: TimeoutCancellationException) {
                 throw BusinessException(S3ErrorCode.TIMEOUT)
             } catch (_: NoSuchBucketException) {
@@ -58,7 +61,7 @@ class S3HealthCheckService(
     /**
      * S3 전체 헬스체크 (설정 검증 + 권한 테스트)
      */
-    suspend fun performHealthCheck(): Unit =
+    suspend fun performHealthCheck(): HealthCheckResponse =
         withContext(Dispatchers.IO) {
             try {
                 // 1. 설정 검증
@@ -69,6 +72,16 @@ class S3HealthCheckService(
 
                 // 3. 권한 테스트 (업로드 -> 읽기 -> 삭제)
                 testAllPermissions()
+
+                HealthCheckResponse.of(
+                    listOf(
+                        "bucket_access",
+                        "upload_permission",
+                        "read_permission",
+                        "delete_permission",
+                        "configuration"
+                    )
+                )
             } catch (e: BusinessException) {
                 throw e
             } catch (e: Exception) {
@@ -217,7 +230,7 @@ class S3HealthCheckService(
     /**
      * S3 예외 처리 공통 로직
      */
-    private fun handleS3Exception(e: S3Exception, operation: String) {
+    private fun handleS3Exception(e: S3Exception, operation: String): Nothing {
         val errorMessage = e.awsErrorDetails()?.errorMessage() ?: e.message
         val errorCode = e.awsErrorDetails()?.errorCode()
         val statusCode = e.statusCode()

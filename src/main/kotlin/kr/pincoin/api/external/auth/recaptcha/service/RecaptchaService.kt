@@ -15,12 +15,23 @@ class RecaptchaService(
     private val recaptchaApiClient: RecaptchaApiClient,
     private val recaptchaProperties: RecaptchaProperties,
 ) {
-
     /**
      * reCAPTCHA v2 검증
      */
     suspend fun verifyV2(token: String): RecaptchaResponse<RecaptchaVerifyData> =
         withContext(Dispatchers.IO) {
+            // enabled가 false인 경우 무조건 성공 반환
+            if (!recaptchaProperties.enabled) {
+                return@withContext RecaptchaResponse.Success(
+                    RecaptchaVerifyData(
+                        success = true,
+                        hostname = null,
+                        challengeTs = null,
+                        errorCodes = null
+                    )
+                )
+            }
+
             try {
                 withTimeout(recaptchaProperties.timeout) {
                     val request = RecaptchaVerifyRequest(token = token)
@@ -46,6 +57,20 @@ class RecaptchaService(
         minScore: Double? = null,
     ): RecaptchaResponse<RecaptchaVerifyData> =
         withContext(Dispatchers.IO) {
+            // enabled가 false인 경우 무조건 성공 반환
+            if (!recaptchaProperties.enabled) {
+                return@withContext RecaptchaResponse.Success(
+                    RecaptchaVerifyData(
+                        success = true,
+                        score = 1.0, // v3의 경우 최고 점수로 설정
+                        action = null,
+                        hostname = null,
+                        challengeTs = null,
+                        errorCodes = null
+                    )
+                )
+            }
+
             try {
                 withTimeout(recaptchaProperties.timeout) {
                     val request = RecaptchaVerifyRequest(token = token)

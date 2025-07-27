@@ -1,6 +1,7 @@
 package kr.pincoin.api.external.auth.keycloak.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.type.CollectionType
 import kotlinx.coroutines.reactor.awaitSingle
 import kr.pincoin.api.external.auth.keycloak.api.request.*
 import kr.pincoin.api.external.auth.keycloak.api.response.*
@@ -56,7 +57,7 @@ class KeycloakApiClient(
         method = HttpMethod.DELETE,
         headers = mapOf(HttpHeaders.AUTHORIZATION to "Bearer $adminToken")
     ) {
-        KeycloakResponse.Success(KeycloakLogoutResponse) // 삭제는 성공만 중요
+        KeycloakResponse.Success(KeycloakLogoutResponse)
     }
 
     /**
@@ -103,6 +104,7 @@ class KeycloakApiClient(
             add("username", request.username)
             add("password", request.password)
             add("scope", request.scope)
+            request.totp?.let { add("totp", it) }
         }
 
         return executeTokenApiCall(
@@ -146,6 +148,82 @@ class KeycloakApiClient(
             "/realms/${keycloakProperties.realm}/protocol/openid-connect/logout",
             formData
         )
+    }
+
+    /**
+     * Admin API - TOTP 인증정보 생성
+     * 단순히 제공된 Secret으로 TOTP 인증정보를 생성합니다.
+     */
+    suspend fun createTotpCredential(
+        adminToken: String,
+        userId: String,
+        secret: String
+    ): KeycloakResponse<KeycloakLogoutResponse> = executeApiCall(
+        uri = "/admin/realms/${keycloakProperties.realm}/users/$userId/credentials",
+        method = HttpMethod.POST,
+        headers = mapOf(HttpHeaders.AUTHORIZATION to "Bearer $adminToken"),
+        contentType = MediaType.APPLICATION_JSON,
+        request = KeycloakTotpSetupRequest(
+            secretData = """{"value":"$secret"}""",
+            credentialData = """{"subType":"totp","digits":6,"period":30,"algorithm":"HmacSHA1"}"""
+        )
+    ) {
+        KeycloakResponse.Success(KeycloakLogoutResponse)
+    }
+
+    /**
+     * Admin API - 사용자에게 필수 액션 설정
+     * requiredActions 목록을 그대로 설정합니다.
+     */
+    suspend fun setUserRequiredActions(
+        adminToken: String,
+        userId: String,
+        requiredActions: List<String>
+    ): KeycloakResponse<KeycloakLogoutResponse> = executeApiCall(
+        uri = "/admin/realms/${keycloakProperties.realm}/users/$userId",
+        method = HttpMethod.PUT,
+        headers = mapOf(HttpHeaders.AUTHORIZATION to "Bearer $adminToken"),
+        contentType = MediaType.APPLICATION_JSON,
+        request = KeycloakRequiredActionRequest(requiredActions = requiredActions)
+    ) {
+        KeycloakResponse.Success(KeycloakLogoutResponse)
+    }
+
+    /**
+     * Admin API - 사용자의 인증정보 목록 조회
+     */
+    suspend fun getUserCredentials(
+        adminToken: String,
+        userId: String
+    ): KeycloakResponse<List<KeycloakCredentialResponse>> = executeApiCall(
+        uri = "/admin/realms/${keycloakProperties.realm}/users/$userId/credentials",
+        method = HttpMethod.GET,
+        headers = mapOf(HttpHeaders.AUTHORIZATION to "Bearer $adminToken")
+    ) { responseBody ->
+        try {
+            val collectionType: CollectionType = objectMapper.typeFactory
+                .constructCollectionType(List::class.java, KeycloakCredentialResponse::class.java)
+
+            val credentials: List<KeycloakCredentialResponse> = objectMapper.readValue(responseBody, collectionType)
+            KeycloakResponse.Success(credentials)
+        } catch (e: Exception) {
+            KeycloakResponse.Error("PARSE_ERROR", "인증정보 파싱 실패: ${e.message}")
+        }
+    }
+
+    /**
+     * Admin API - 특정 인증정보 삭제
+     */
+    suspend fun deleteCredential(
+        adminToken: String,
+        userId: String,
+        credentialId: String
+    ): KeycloakResponse<KeycloakLogoutResponse> = executeApiCall(
+        uri = "/admin/realms/${keycloakProperties.realm}/users/$userId/credentials/$credentialId",
+        method = HttpMethod.DELETE,
+        headers = mapOf(HttpHeaders.AUTHORIZATION to "Bearer $adminToken")
+    ) {
+        KeycloakResponse.Success(KeycloakLogoutResponse)
     }
 
     /**
@@ -274,7 +352,6 @@ class KeycloakApiClient(
             handleGenericError(e)
         }
 
-
     /**
      * 로그아웃 API 호출
      */
@@ -298,6 +375,9 @@ class KeycloakApiClient(
             handleGenericError(e)
         }
 
+    /**
+     * Location 헤더에서 사용자 ID 추출
+     */
     private fun extractUserIdFromLocation(locationHeader: String?): String? {
         return locationHeader?.let { location ->
             location.substringAfterLast("/")
@@ -309,12 +389,12 @@ class KeycloakApiClient(
      * 성공 응답 파싱
      */
     private fun <T> handleSuccessResponse(
-        response: String, dataClass: Class<T>,
+        response: String,
+        dataClass: Class<T>,
     ): KeycloakResponse<T> {
         return try {
             val jsonNode = objectMapper.readTree(response)
 
-            // 에러 체크
             if (jsonNode.has("error")) {
                 return KeycloakResponse.Error(
                     errorCode = jsonNode.get("error").asText(),
@@ -322,14 +402,16 @@ class KeycloakApiClient(
                 )
             }
 
-            // 성공 응답 파싱
-            val data = objectMapper.readValue(response, dataClass)
+            val data: T = objectMapper.readValue(response, dataClass)
             KeycloakResponse.Success(data)
         } catch (e: Exception) {
             KeycloakResponse.Error("PARSE_ERROR", "응답 파싱 실패: ${e.message}")
         }
     }
 
+    /**
+     * HTTP 에러 처리
+     */
     private fun handleHttpError(
         e: WebClientResponseException,
     ): KeycloakResponse<Nothing> =
@@ -355,6 +437,9 @@ class KeycloakApiClient(
             )
         }
 
+    /**
+     * 일반 예외 처리
+     */
     private fun handleGenericError(
         e: Exception,
     ): KeycloakResponse<Nothing> {

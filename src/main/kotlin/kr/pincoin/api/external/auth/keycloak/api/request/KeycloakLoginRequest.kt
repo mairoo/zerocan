@@ -25,5 +25,8 @@ data class KeycloakLoginRequest(
     val password: String,
 
     @JsonProperty("scope")
-    val scope: String = "openid profile email"
+    val scope: String = "openid profile email",
+
+    @JsonProperty("totp")
+    val totp: String? = null,
 )
