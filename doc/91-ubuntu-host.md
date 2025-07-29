@@ -166,6 +166,8 @@ docker run hello-world
 
 sudo mkdir -p /opt/docker
 sudo chown ubuntu:ubuntu /opt/docker
+cd /opt/docker
+mkdir projects scripts logs
 
 # ubuntu 계정 docker 그룹에 추가하여 sudo 권한 필요 없이 접근
 sudo usermod -aG docker ubuntu
@@ -182,6 +184,74 @@ newgrp docker
 .gradle/
 *.log
 logs/
+```
+
+# 도커 구성 초안
+
+```
+/opt/docker/
+├── projects/
+│   ├── project1/
+│   └── project2/
+├── scripts/
+│   ├── docker-prune.sh
+│   ├── docker-cleanup.sh
+│   ├── backup.sh
+│   └── maintenance.sh
+├── logs/
+│   ├── system/
+│   ├── project1/
+│   └── project2/
+├── data/
+│   └── shared/
+└── config/
+    ├── docker-compose.global.yml
+    └── env/
+```
+
+# 도커 정리 스크립트
+
+`/opt/docker/scripts/cleanup.sh`
+
+```shell
+#!/bin/bash
+# Docker 정리 스크립트
+
+# 로그 설정
+LOG_FILE="/opt/docker/logs/cleanup.log"
+mkdir -p "$(dirname "$LOG_FILE")"
+
+echo "$(date): Docker cleanup started" >> "$LOG_FILE"
+
+# 정지된 컨테이너 삭제
+docker container prune -f >> "$LOG_FILE" 2>&1
+
+# 사용하지 않는 네트워크 삭제
+docker network prune -f >> "$LOG_FILE" 2>&1
+
+# 1주일 이상 된 이미지만 삭제 (안전)
+docker image prune --filter "until=168h" -f >> "$LOG_FILE" 2>&1
+
+# 사용하지 않는 볼륨 삭제 (주의: 데이터 손실 가능)
+# docker volume prune -f >> "$LOG_FILE" 2>&1
+
+# 디스크 사용량 로깅
+echo "$(date): Disk usage after cleanup:" >> "$LOG_FILE"
+df -h >> "$LOG_FILE"
+docker system df >> "$LOG_FILE"
+
+echo "$(date): Docker cleanup completed" >> "$LOG_FILE"
+```
+
+```shell
+# 스크립트 실행 권한
+sudo chmod +x /opt/docker/scripts/cleanup.sh
+
+# crontab 설정
+sudo crontab -e
+
+# 새벽 3시에 실행
+0 3 * * * /opt/docker/scripts/cleanup.sh
 ```
 
 ## 호스트 nginx
@@ -250,14 +320,6 @@ sudo systemctl reload nginx
 ```
 
 # 최종 운영환경 아키텍처 검토
-
-## 현재 구성 분석
-
-### 🔍 발견된 이슈들
-
-1. **nginx 중복**: 호스트 nginx와 Docker nginx가 동시 존재
-2. **도메인 오타**: `keyclaok.example.com` → `keycloak.example.com`
-3. **포트 충돌 가능성**: 호스트 nginx와 Docker nginx 모두 443 포트 사용
 
 ## 호스트 nginx 리버스 프록시 아키텍처
 
