@@ -63,6 +63,8 @@ class SecurityConfig(
                     jwt.decoder(keycloakJwtDecoder.createDecoder())
                     jwt.jwtAuthenticationConverter(keycloakJwtAuthenticationConverter)
                 }
+                oauth2.authenticationEntryPoint(authenticationEntryPoint)
+                oauth2.accessDeniedHandler(accessDeniedHandler)
             }
             // 3. 권한 설정
             .authorizeHttpRequests { auth ->
